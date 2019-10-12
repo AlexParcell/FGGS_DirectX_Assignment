@@ -439,6 +439,8 @@ void Application::Update()
     // Animate the cube
     //
 	XMStoreFloat4x4(&_world, XMMatrixRotationY(t));
+
+	XMStoreFloat4x4(&_world2, XMMatrixRotationX(t) * XMMatrixTranslation(4.0f, 0.0f, 0.0f));
 }
 
 void Application::Draw()
@@ -469,6 +471,13 @@ void Application::Draw()
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
     _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
+
+	_pImmediateContext->DrawIndexed(36, 0, 0);
+
+	world = XMLoadFloat4x4(&_world2);
+	cb.mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
 	_pImmediateContext->DrawIndexed(36, 0, 0);        
 
     //
