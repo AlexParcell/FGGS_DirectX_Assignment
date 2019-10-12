@@ -69,7 +69,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	XMStoreFloat4x4(&_world, XMMatrixIdentity());
 
     // Initialize the view matrix
-	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -10.0f, 0.0f);
+	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -20.0f, 0.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -457,9 +457,19 @@ void Application::Update()
     //
     // Animate the cube
     //
-	XMStoreFloat4x4(&_world, XMMatrixRotationY(t));
+	XMStoreFloat4x4(&_world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(t) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
 
-	XMStoreFloat4x4(&_world2, XMMatrixTranslation(0.0f, 5.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationX(t));
+	XMMATRIX Object1 = XMMatrixTranslation(0.0f, 10.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationX(t);
+	XMMATRIX Object2 = XMMatrixTranslation(7.0f, 0.0f, 0.0f) * XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationY(t) * Object1;
+	XMMATRIX Object3 = XMMatrixTranslation(5.0f, 0.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationY(t);
+	XMMATRIX Object4 = XMMatrixTranslation(0.0f, 4.0f, 0.0f)* XMMatrixScaling(0.5f, 0.5f, 0.5f)* XMMatrixRotationX(t) * Object3;
+
+
+	XMStoreFloat4x4(&_world2, Object1);
+	XMStoreFloat4x4(&_world3, Object2);
+	XMStoreFloat4x4(&_world4, Object3);
+	XMStoreFloat4x4(&_world5, Object4);
+
 }
 
 void Application::Draw()
@@ -498,7 +508,25 @@ void Application::Draw()
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-	_pImmediateContext->DrawIndexed(36, 0, 0);        
+	_pImmediateContext->DrawIndexed(36, 0, 0);  
+
+	world = XMLoadFloat4x4(&_world3);
+	cb.mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+	_pImmediateContext->DrawIndexed(36, 0, 0);
+
+	world = XMLoadFloat4x4(&_world4);
+	cb.mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+	_pImmediateContext->DrawIndexed(36, 0, 0);
+
+	world = XMLoadFloat4x4(&_world5);
+	cb.mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+	_pImmediateContext->DrawIndexed(36, 0, 0);
 
     //
     // Present our back buffer to our front buffer
