@@ -48,6 +48,8 @@ Application::~Application()
 
 HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 {
+	srand(time(NULL));
+
     if (FAILED(InitWindow(hInstance, nCmdShow)))
 	{
         return E_FAIL;
@@ -355,6 +357,7 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
 		return hr;
 
+	// Setup Stencil/Depth Description
 	D3D11_TEXTURE2D_DESC depthStencilDesc;
 	depthStencilDesc.Width = _WindowWidth;
 	depthStencilDesc.Height = _WindowHeight;
@@ -412,6 +415,28 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
         return hr;
 
+	// Setup Wireframe Mode
+	D3D11_RASTERIZER_DESC wfdesc;
+	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
+	wfdesc.FillMode = D3D11_FILL_WIREFRAME;
+	wfdesc.CullMode = D3D11_CULL_NONE;
+	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_wireFrame);
+
+	if (FAILED(hr))
+		return hr;
+
+	// Setup Wireframe Mode
+	D3D11_RASTERIZER_DESC fmdesc;
+	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
+	wfdesc.FillMode = D3D11_FILL_SOLID;
+	wfdesc.CullMode = D3D11_CULL_BACK;
+	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_fillMode);
+
+	if (FAILED(hr))
+		return hr;
+
+	_pImmediateContext->RSSetState(_fillMode);
+
     return S_OK;
 }
 
@@ -421,6 +446,8 @@ void Application::Cleanup()
 
 	if (_depthStencilView) _depthStencilView->Release();
 	if (_depthStencilBuffer) _depthStencilBuffer->Release();
+	if (_wireFrame) _wireFrame->Release();
+	if (_fillMode) _fillMode->Release();
 
     if (_pConstantBuffer) _pConstantBuffer->Release();
     if (_pVertexBuffer) _pVertexBuffer->Release();
@@ -454,21 +481,63 @@ void Application::Update()
         t = (dwTimeCur - dwTimeStart) / 1000.0f;
     }
 
+	float Scalar = 1.0f;
+
+	if (GetAsyncKeyState(VK_DOWN))
+	{
+		Scalar = -1.0f;
+	}
+
     //
     // Animate the cube
     //
-	XMStoreFloat4x4(&_world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(t) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
+	XMStoreFloat4x4(&_world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(t * Scalar) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
 
-	XMMATRIX Object1 = XMMatrixTranslation(0.0f, 10.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationX(t);
-	XMMATRIX Object2 = XMMatrixTranslation(7.0f, 0.0f, 0.0f) * XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationY(t) * Object1;
-	XMMATRIX Object3 = XMMatrixTranslation(5.0f, 0.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationY(t);
-	XMMATRIX Object4 = XMMatrixTranslation(0.0f, 4.0f, 0.0f)* XMMatrixScaling(0.5f, 0.5f, 0.5f)* XMMatrixRotationX(t) * Object3;
-
+	XMMATRIX Object1 = XMMatrixTranslation(0.0f, 10.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationX(t * Scalar);
+	XMMATRIX Object2 = XMMatrixTranslation(7.0f, 0.0f, 0.0f) * XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationY(t * Scalar) * Object1;
+	XMMATRIX Object3 = XMMatrixTranslation(5.0f, 0.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationY(t * Scalar);
+	XMMATRIX Object4 = XMMatrixTranslation(0.0f, 10.0f, 0.0f)* XMMatrixScaling(0.5f, 0.5f, 0.5f)* XMMatrixRotationX(t * Scalar) * Object3;
 
 	XMStoreFloat4x4(&_world2, Object1);
 	XMStoreFloat4x4(&_world3, Object2);
 	XMStoreFloat4x4(&_world4, Object3);
 	XMStoreFloat4x4(&_world5, Object4);
+
+	for (int i = 0; i < 100; i++)
+	{
+		XMMATRIX Asteroid = XMMatrixTranslation(float((rand() % 50) - 25), 0.0f, float((rand() % 50) - 25))
+			* XMMatrixScaling(0.2f, 0.2f, 0.2f)
+			* XMMatrixRotationY(t * Scalar)
+			* Object4;
+		XMFLOAT4X4 world;
+		XMStoreFloat4x4(&world, Asteroid);
+
+		if (AsteroidsSet)
+		{
+			asteroids[i] = world;
+		}
+		else
+		{
+			asteroids.push_back(world);
+		}
+	}
+	if (!AsteroidsSet)
+	{
+		AsteroidsSet = true;
+	}
+
+	if (GetAsyncKeyState(VK_UP))
+	{
+		if (Wireframe)
+		{
+			_pImmediateContext->RSSetState(_fillMode);
+		}
+		else
+		{
+			_pImmediateContext->RSSetState(_wireFrame);
+		}
+		Wireframe = !Wireframe;
+	}
 
 }
 
@@ -527,6 +596,15 @@ void Application::Draw()
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
 	_pImmediateContext->DrawIndexed(36, 0, 0);
+
+	for (int i = 0; i < asteroids.size(); i++)
+	{
+		world = XMLoadFloat4x4(&asteroids[i]);
+		cb.mWorld = XMMatrixTranspose(world);
+		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+		_pImmediateContext->DrawIndexed(36, 0, 0);
+	}
 
     //
     // Present our back buffer to our front buffer

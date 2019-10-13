@@ -7,7 +7,12 @@
 #include <directxcolors.h>
 #include "resource.h"
 
+#include <stdlib.h>
+#include <time.h>
+#include <vector>
+
 using namespace DirectX;
+using namespace std;
 
 struct SimpleVertex
 {
@@ -44,6 +49,12 @@ private:
 	XMFLOAT4X4              _projection;
 	ID3D11DepthStencilView* _depthStencilView;
 	ID3D11Texture2D* _depthStencilBuffer;
+	ID3D11RasterizerState* _wireFrame;
+	ID3D11RasterizerState* _fillMode;
+	bool Wireframe = false;
+	vector<XMFLOAT4X4> asteroids;
+	bool AsteroidsSet = false;
+
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
