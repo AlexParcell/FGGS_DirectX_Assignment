@@ -25,6 +25,7 @@ struct ConstantBuffer
 	XMMATRIX mWorld;
 	XMMATRIX mView;
 	XMMATRIX mProjection;
+	float gTime;
 };
 
 class Application
@@ -55,6 +56,10 @@ private:
 	vector<XMFLOAT4X4> asteroids;
 	bool AsteroidsSet = false;
 
+	ID3D11Buffer* _pPyramidVertexBuffer;
+	ID3D11Buffer* _pPyramidIndexBuffer;
+
+	float _fTime = 0.0f;
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);

@@ -181,6 +181,32 @@ HRESULT Application::InitVertexBuffer()
     if (FAILED(hr))
         return hr;
 
+	SimpleVertex pyramidVertices[] =
+	{
+		{ XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
+	};
+
+	D3D11_BUFFER_DESC pyramidbd;
+	ZeroMemory(&pyramidbd, sizeof(pyramidbd));
+	pyramidbd.Usage = D3D11_USAGE_DEFAULT;
+	pyramidbd.ByteWidth = sizeof(SimpleVertex) * 5;
+	pyramidbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	pyramidbd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA PyramidInitData;
+	ZeroMemory(&PyramidInitData, sizeof(PyramidInitData));
+	PyramidInitData.pSysMem = pyramidVertices;
+
+	hr = _pd3dDevice->CreateBuffer(&pyramidbd, &PyramidInitData, &_pPyramidVertexBuffer);
+
+	if (FAILED(hr))
+		return hr;
+
+
 	return S_OK;
 }
 
@@ -220,6 +246,32 @@ HRESULT Application::InitIndexBuffer()
 
     if (FAILED(hr))
         return hr;
+
+	WORD pyramidIndices[] =
+	{
+		0, 1, 2,
+		0, 2, 3,
+		0, 3, 4,
+		0, 4, 1,
+		1, 4, 2,
+		2, 4, 3,
+	};
+
+	D3D11_BUFFER_DESC pyramidbd;
+	ZeroMemory(&pyramidbd, sizeof(pyramidbd));
+
+	pyramidbd.Usage = D3D11_USAGE_DEFAULT;
+	pyramidbd.ByteWidth = sizeof(WORD) * 18;
+	pyramidbd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	pyramidbd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA PyramidInitData;
+	ZeroMemory(&PyramidInitData, sizeof(PyramidInitData));
+	PyramidInitData.pSysMem = pyramidIndices;
+	hr = _pd3dDevice->CreateBuffer(&pyramidbd, &PyramidInitData, &_pPyramidIndexBuffer);
+
+	if (FAILED(hr))
+		return hr;
 
 	return S_OK;
 }
@@ -389,16 +441,7 @@ HRESULT Application::InitDevice()
 	InitShadersAndInputLayout();
 
 	InitVertexBuffer();
-
-    // Set vertex buffer
-    UINT stride = sizeof(SimpleVertex);
-    UINT offset = 0;
-    _pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
-
 	InitIndexBuffer();
-
-    // Set index buffer
-    _pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -539,6 +582,7 @@ void Application::Update()
 		Wireframe = !Wireframe;
 	}
 
+	_fTime = t;
 }
 
 void Application::Draw()
@@ -553,6 +597,14 @@ void Application::Draw()
 	XMMATRIX world = XMLoadFloat4x4(&_world);
 	XMMATRIX view = XMLoadFloat4x4(&_view);
 	XMMATRIX projection = XMLoadFloat4x4(&_projection);
+
+	UINT stride = sizeof(SimpleVertex);
+	UINT offset = 0;
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
+
+	// Set cube index buffer
+	_pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
     //
     // Update variables
     //
@@ -560,6 +612,7 @@ void Application::Draw()
 	cb.mWorld = XMMatrixTranspose(world);
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
+	cb.gTime = _fTime;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
@@ -585,17 +638,27 @@ void Application::Draw()
 
 	_pImmediateContext->DrawIndexed(36, 0, 0);
 
+	// Set pyramid vertex buffer
+
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
+
+	// Set pyramid index buffer
+	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+	world = XMLoadFloat4x4(&_world2);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
 	world = XMLoadFloat4x4(&_world4);
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-	_pImmediateContext->DrawIndexed(36, 0, 0);
+	_pImmediateContext->DrawIndexed(18, 0, 0);
 
 	world = XMLoadFloat4x4(&_world5);
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-	_pImmediateContext->DrawIndexed(36, 0, 0);
+	_pImmediateContext->DrawIndexed(18, 0, 0);
 
 	for (int i = 0; i < asteroids.size(); i++)
 	{
@@ -603,7 +666,7 @@ void Application::Draw()
 		cb.mWorld = XMMatrixTranspose(world);
 		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-		_pImmediateContext->DrawIndexed(36, 0, 0);
+		_pImmediateContext->DrawIndexed(18, 0, 0);
 	}
 
     //
