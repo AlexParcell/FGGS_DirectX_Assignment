@@ -71,7 +71,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	XMStoreFloat4x4(&_world, XMMatrixIdentity());
 
     // Initialize the view matrix
-	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -20.0f, 0.0f);
+	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -208,6 +208,96 @@ HRESULT Application::InitVertexBuffer()
 
 
 	return S_OK;
+}
+
+// To do: figure out how this works
+HRESULT Application::MakeGrid(int size)
+{
+	HRESULT hr;
+
+	int dimension = 0;
+
+	if (size < 1)
+	{
+		dimension = 1;
+	}
+	else
+	{
+		dimension = size;
+	}
+
+	dimension++;
+
+	int vertexCount = (dimension + 1) * (dimension + 1);
+	int indexCount = 6 * (dimension * dimension);
+	PlaneIndices = indexCount;
+	SimpleVertex* vertices = new SimpleVertex[vertexCount];
+	WORD* indices = new WORD[indexCount];
+
+	for (int z = 0, index = 0; z < dimension; ++z)
+	{
+		for (int x = 0; x < dimension; ++x, ++index)
+		{
+			vertices[index].Pos = XMFLOAT3(x, 0.0f, z);
+			vertices[index].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
+		}
+	}
+
+	D3D11_BUFFER_DESC vbd;
+	ZeroMemory(&vbd, sizeof(vbd));
+	vbd.Usage = D3D11_USAGE_DEFAULT;
+	vbd.ByteWidth = sizeof(SimpleVertex) * vertexCount;
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vInitData;
+	ZeroMemory(&vInitData, sizeof(vInitData));
+	vInitData.pSysMem = vertices;
+
+	hr = _pd3dDevice->CreateBuffer(&vbd, &vInitData, &_pPlaneVertexBuffer);
+
+	delete[] vertices;
+
+	if (FAILED(hr))
+		return hr;
+
+	for (int z = 0, index = 0; z < dimension - 1; ++z)
+	{
+		for (int x = 0; x < dimension - 1; ++x)
+		{
+			indices[index++] = z * dimension + x;
+			indices[index++] = (z + 1) * dimension + x;
+			indices[index++] = (z + 1) * dimension + (x + 1);
+
+			indices[index++] = z * dimension + x;
+			indices[index++] = (z + 1) * dimension + (x + 1);
+			indices[index++] = z * dimension + (x + 1);
+		}
+	}
+
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(WORD) * indexCount;
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA InitData;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = indices;
+	hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pPlaneIndexBuffer);
+
+	delete[] indices;
+
+	if (FAILED(hr))
+		return hr;
+
+	float centerOffset = float(dimension / 2) * -1.0f;
+	XMMATRIX world = XMMatrixTranslation(centerOffset, -15.0f, centerOffset) * XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&_planeWorld, world);
+
+	return hr;
 }
 
 HRESULT Application::InitIndexBuffer()
@@ -443,6 +533,8 @@ HRESULT Application::InitDevice()
 	InitVertexBuffer();
 	InitIndexBuffer();
 
+	MakeGrid(20);
+
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -668,6 +760,19 @@ void Application::Draw()
 
 		_pImmediateContext->DrawIndexed(18, 0, 0);
 	}
+
+	// PLANE
+
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPlaneVertexBuffer, &stride, &offset);
+
+	// Set pyramid index buffer
+	_pImmediateContext->IASetIndexBuffer(_pPlaneIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+	world = XMLoadFloat4x4(&_planeWorld);
+	cb.mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+	_pImmediateContext->DrawIndexed(PlaneIndices, 0, 0);
 
     //
     // Present our back buffer to our front buffer

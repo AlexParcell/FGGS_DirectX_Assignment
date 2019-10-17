@@ -45,7 +45,7 @@ private:
 	ID3D11Buffer*           _pVertexBuffer;
 	ID3D11Buffer*           _pIndexBuffer;
 	ID3D11Buffer*           _pConstantBuffer;
-	XMFLOAT4X4              _world, _world2, _world3, _world4, _world5;
+	XMFLOAT4X4              _world, _world2, _world3, _world4, _world5, _planeWorld;
 	XMFLOAT4X4              _view;
 	XMFLOAT4X4              _projection;
 	ID3D11DepthStencilView* _depthStencilView;
@@ -59,6 +59,11 @@ private:
 	ID3D11Buffer* _pPyramidVertexBuffer;
 	ID3D11Buffer* _pPyramidIndexBuffer;
 
+
+	ID3D11Buffer* _pPlaneVertexBuffer;
+	ID3D11Buffer* _pPlaneIndexBuffer;
+	int PlaneIndices;
+
 	float _fTime = 0.0f;
 
 private:
@@ -69,6 +74,7 @@ private:
 	HRESULT InitShadersAndInputLayout();
 	HRESULT InitVertexBuffer();
 	HRESULT InitIndexBuffer();
+	HRESULT MakeGrid(int size);
 
 	UINT _WindowHeight;
 	UINT _WindowWidth;
