@@ -210,7 +210,7 @@ HRESULT Application::InitVertexBuffer()
 	return S_OK;
 }
 
-// To do: figure out how this works
+// To do: figure out how this works source: https://gamedev.stackexchange.com/questions/135943/directx11-texturing-terrain-mesh-with-shared-vertices
 HRESULT Application::MakeGrid(int size)
 {
 	HRESULT hr;
@@ -533,7 +533,7 @@ HRESULT Application::InitDevice()
 	InitVertexBuffer();
 	InitIndexBuffer();
 
-	MakeGrid(20);
+	MakeGrid(40);
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
