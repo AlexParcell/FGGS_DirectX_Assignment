@@ -17,7 +17,7 @@ using namespace std;
 struct SimpleVertex
 {
     XMFLOAT3 Pos;
-    XMFLOAT4 Color;
+	XMFLOAT3 Normal;
 };
 
 struct ConstantBuffer
@@ -26,6 +26,9 @@ struct ConstantBuffer
 	XMMATRIX mView;
 	XMMATRIX mProjection;
 	float gTime;
+	XMFLOAT3 lightDirection;
+	XMFLOAT4 diffuseMaterial;
+	XMFLOAT4 diffuseLight;
 };
 
 class Application
@@ -59,12 +62,15 @@ private:
 	ID3D11Buffer* _pPyramidVertexBuffer;
 	ID3D11Buffer* _pPyramidIndexBuffer;
 
-
 	ID3D11Buffer* _pPlaneVertexBuffer;
 	ID3D11Buffer* _pPlaneIndexBuffer;
 	int PlaneIndices;
 
 	float _fTime = 0.0f;
+
+	XMFLOAT3 _lightDirection;
+	XMFLOAT4 _diffuseMaterial;
+	XMFLOAT4 _diffuseLight;
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
@@ -72,12 +78,14 @@ private:
 	void Cleanup();
 	HRESULT CompileShaderFromFile(WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
 	HRESULT InitShadersAndInputLayout();
-	HRESULT InitVertexBuffer();
-	HRESULT InitIndexBuffer();
+	HRESULT MakePyramid();
+	HRESULT MakeCube();
 	HRESULT MakeGrid(int size);
 
 	UINT _WindowHeight;
 	UINT _WindowWidth;
+
+	void CalculateVertexNormals(SimpleVertex vertices[], int VertexCount, WORD indices[], int indexCount);
 
 public:
 	Application();

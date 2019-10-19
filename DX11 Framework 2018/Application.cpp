@@ -39,6 +39,14 @@ Application::Application()
 	_pVertexBuffer = nullptr;
 	_pIndexBuffer = nullptr;
 	_pConstantBuffer = nullptr;
+
+	// Light direction from surface (XYZ)
+	_lightDirection = XMFLOAT3(1.0f, -0.5f, 1.0f);
+	// Diffuse material properties (RGBA)
+	_diffuseMaterial = XMFLOAT4(0.8f, 0.5f, 0.5f, 1.0f);
+	// Diffuse light colour (RGBA)
+	_diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
 }
 
 Application::~Application()
@@ -129,7 +137,7 @@ HRESULT Application::InitShadersAndInputLayout()
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
 	UINT numElements = ARRAYSIZE(layout);
@@ -146,68 +154,6 @@ HRESULT Application::InitShadersAndInputLayout()
     _pImmediateContext->IASetInputLayout(_pVertexLayout);
 
 	return hr;
-}
-
-HRESULT Application::InitVertexBuffer()
-{
-	HRESULT hr;
-
-	// Create vertex buffer
-	SimpleVertex vertices[] =
-	{
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f),XMFLOAT4(0.0f, 0.0f, 1.0f, 0.0f)},
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
-	};
-
-    D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * 8;
-    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-
-    D3D11_SUBRESOURCE_DATA InitData;
-	ZeroMemory(&InitData, sizeof(InitData));
-    InitData.pSysMem = vertices;
-
-    hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pVertexBuffer);
-
-    if (FAILED(hr))
-        return hr;
-
-	SimpleVertex pyramidVertices[] =
-	{
-		{ XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f) },
-	};
-
-	D3D11_BUFFER_DESC pyramidbd;
-	ZeroMemory(&pyramidbd, sizeof(pyramidbd));
-	pyramidbd.Usage = D3D11_USAGE_DEFAULT;
-	pyramidbd.ByteWidth = sizeof(SimpleVertex) * 5;
-	pyramidbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	pyramidbd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA PyramidInitData;
-	ZeroMemory(&PyramidInitData, sizeof(PyramidInitData));
-	PyramidInitData.pSysMem = pyramidVertices;
-
-	hr = _pd3dDevice->CreateBuffer(&pyramidbd, &PyramidInitData, &_pPyramidVertexBuffer);
-
-	if (FAILED(hr))
-		return hr;
-
-
-	return S_OK;
 }
 
 // To do: figure out how this works source: https://gamedev.stackexchange.com/questions/135943/directx11-texturing-terrain-mesh-with-shared-vertices
@@ -229,7 +175,9 @@ HRESULT Application::MakeGrid(int size)
 	dimension++;
 
 	int vertexCount = (dimension + 1) * (dimension + 1);
+	int actualVertexCount = 0;
 	int indexCount = 6 * (dimension * dimension);
+	int actualIndexCount = 0;
 	PlaneIndices = indexCount;
 	SimpleVertex* vertices = new SimpleVertex[vertexCount];
 	WORD* indices = new WORD[indexCount];
@@ -239,10 +187,42 @@ HRESULT Application::MakeGrid(int size)
 		for (int x = 0; x < dimension; ++x, ++index)
 		{
 			vertices[index].Pos = XMFLOAT3(x, 0.0f, z);
-			vertices[index].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
+			actualVertexCount++;
 		}
 	}
 
+	for (int z = 0, index = 0; z < dimension - 1; ++z)
+	{
+		for (int x = 0; x < dimension - 1; ++x)
+		{
+			indices[index++] = z * dimension + x;
+			indices[index++] = (z + 1) * dimension + x;
+			indices[index++] = (z + 1) * dimension + (x + 1);
+
+			indices[index++] = z * dimension + x;
+			indices[index++] = (z + 1) * dimension + (x + 1);
+			indices[index++] = z * dimension + (x + 1);
+			actualIndexCount += 6;
+		}
+	}
+
+	CalculateVertexNormals(vertices, actualVertexCount, indices, actualIndexCount);
+
+	// do the index buffer
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(WORD) * indexCount;
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA InitData;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = indices;
+	hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pPlaneIndexBuffer);
+
+	// do the vertex buffer
 	D3D11_BUFFER_DESC vbd;
 	ZeroMemory(&vbd, sizeof(vbd));
 	vbd.Usage = D3D11_USAGE_DEFAULT;
@@ -257,37 +237,6 @@ HRESULT Application::MakeGrid(int size)
 	hr = _pd3dDevice->CreateBuffer(&vbd, &vInitData, &_pPlaneVertexBuffer);
 
 	delete[] vertices;
-
-	if (FAILED(hr))
-		return hr;
-
-	for (int z = 0, index = 0; z < dimension - 1; ++z)
-	{
-		for (int x = 0; x < dimension - 1; ++x)
-		{
-			indices[index++] = z * dimension + x;
-			indices[index++] = (z + 1) * dimension + x;
-			indices[index++] = (z + 1) * dimension + (x + 1);
-
-			indices[index++] = z * dimension + x;
-			indices[index++] = (z + 1) * dimension + (x + 1);
-			indices[index++] = z * dimension + (x + 1);
-		}
-	}
-
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * indexCount;
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA InitData;
-	ZeroMemory(&InitData, sizeof(InitData));
-	InitData.pSysMem = indices;
-	hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pPlaneIndexBuffer);
-
 	delete[] indices;
 
 	if (FAILED(hr))
@@ -300,7 +249,47 @@ HRESULT Application::MakeGrid(int size)
 	return hr;
 }
 
-HRESULT Application::InitIndexBuffer()
+void Application::CalculateVertexNormals(SimpleVertex vertices[], int VertexCount, WORD indices[], int indexCount)
+{
+	/*
+	for each vertex,
+	go through each 3 indices, find if the vertex is in there
+	if it is, get the cross product of the other vertices against this one
+	then, normalize it to get it into a unit vector and add it to vectors already done for this vertex
+	go through every indice until done
+	then, divide the sum we have by the occurances to get the averaged normal
+	*/
+
+	for (int i = 0; i < VertexCount; i++)
+	{
+		XMVECTOR SumVector = { 0.0f, 0.0f, 0.0f };
+		int occurances = 0;
+
+		for (int j = 0; j < indexCount; j += 3)
+		{
+			if (indices[j] == i || indices[j + 1] == i || indices[i + 2] == i)
+			{
+				XMVECTOR a = XMLoadFloat3(&(vertices[indices[j]].Pos));
+				XMVECTOR b = XMLoadFloat3(&vertices[indices[j + 1]].Pos);
+				XMVECTOR c = XMLoadFloat3(&vertices[indices[j + 2]].Pos);
+
+				XMVECTOR ac = XMVectorSubtract(c, a);
+				XMVECTOR bc = XMVectorSubtract(b, c);
+				XMVECTOR polyNormal = XMVector3Cross(ac, bc);
+				XMVECTOR unitNormal = XMVector3Normalize(polyNormal);
+
+				SumVector += unitNormal;
+
+				occurances++;
+			}
+		}
+
+		XMVECTOR FinalNormal = SumVector / occurances;
+		XMStoreFloat3(&vertices[i].Normal, FinalNormal);
+	}
+}
+
+HRESULT Application::MakeCube()
 {
 	HRESULT hr;
 
@@ -321,21 +310,59 @@ HRESULT Application::InitIndexBuffer()
 		6, 5, 4,
 	};
 
+	D3D11_BUFFER_DESC ibd;
+	ZeroMemory(&ibd, sizeof(ibd));
+
+	ibd.Usage = D3D11_USAGE_DEFAULT;
+	ibd.ByteWidth = sizeof(WORD) * 36;
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA InitIndexData;
+	ZeroMemory(&InitIndexData, sizeof(InitIndexData));
+	InitIndexData.pSysMem = indices;
+	hr = _pd3dDevice->CreateBuffer(&ibd, &InitIndexData, &_pIndexBuffer);
+
+	if (FAILED(hr))
+		return hr;
+
+	// Create vertex buffer
+	SimpleVertex vertices[] =
+	{
+		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, 1.0f),XMFLOAT3(0.0f, 0.0f, 0.0f)},
+		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f)},
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+	};
+
+	CalculateVertexNormals(vertices, 8, indices, 36);
+
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(WORD) * 36;     
-    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(SimpleVertex) * 8;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA InitData;
 	ZeroMemory(&InitData, sizeof(InitData));
-    InitData.pSysMem = indices;
-    hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pIndexBuffer);
+	InitData.pSysMem = vertices;
 
-    if (FAILED(hr))
-        return hr;
+	hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pVertexBuffer);
+
+	if (FAILED(hr))
+		return hr;
+
+	return S_OK;
+}
+
+HRESULT Application::MakePyramid()
+{
+	HRESULT hr;
 
 	WORD pyramidIndices[] =
 	{
@@ -347,18 +374,51 @@ HRESULT Application::InitIndexBuffer()
 		2, 4, 3,
 	};
 
+	// index buffer
+
+	SimpleVertex pyramidVertices[] =
+	{
+		{ XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+	};
+
+	CalculateVertexNormals(pyramidVertices, 5, pyramidIndices, 18);
+
+	// vertex buffer
+
 	D3D11_BUFFER_DESC pyramidbd;
 	ZeroMemory(&pyramidbd, sizeof(pyramidbd));
-
 	pyramidbd.Usage = D3D11_USAGE_DEFAULT;
-	pyramidbd.ByteWidth = sizeof(WORD) * 18;
-	pyramidbd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	pyramidbd.ByteWidth = sizeof(SimpleVertex) * 5;
+	pyramidbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	pyramidbd.CPUAccessFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA PyramidInitData;
 	ZeroMemory(&PyramidInitData, sizeof(PyramidInitData));
-	PyramidInitData.pSysMem = pyramidIndices;
-	hr = _pd3dDevice->CreateBuffer(&pyramidbd, &PyramidInitData, &_pPyramidIndexBuffer);
+	PyramidInitData.pSysMem = pyramidVertices;
+
+	hr = _pd3dDevice->CreateBuffer(&pyramidbd, &PyramidInitData, &_pPyramidVertexBuffer);
+
+	if (FAILED(hr))
+		return hr;
+
+	// index buffer
+
+	D3D11_BUFFER_DESC pyramidibd;
+	ZeroMemory(&pyramidibd, sizeof(pyramidibd));
+	pyramidibd.Usage = D3D11_USAGE_DEFAULT;
+	pyramidibd.ByteWidth = sizeof(WORD) * 18;
+	pyramidibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	pyramidibd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA PyramidIndexInitData;
+	ZeroMemory(&PyramidIndexInitData, sizeof(PyramidIndexInitData));
+	PyramidIndexInitData.pSysMem = pyramidIndices;
+
+	hr = _pd3dDevice->CreateBuffer(&pyramidibd, &PyramidIndexInitData, &_pPyramidIndexBuffer);
 
 	if (FAILED(hr))
 		return hr;
@@ -530,9 +590,8 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	InitVertexBuffer();
-	InitIndexBuffer();
-
+	MakePyramid();
+	MakeCube();
 	MakeGrid(40);
 
     // Set primitive topology
@@ -705,6 +764,9 @@ void Application::Draw()
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
 	cb.gTime = _fTime;
+	cb.lightDirection = _lightDirection;
+	cb.diffuseMaterial = _diffuseMaterial;
+	cb.diffuseLight = _diffuseLight;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
