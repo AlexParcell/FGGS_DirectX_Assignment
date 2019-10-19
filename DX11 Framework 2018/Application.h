@@ -29,6 +29,12 @@ struct ConstantBuffer
 	XMFLOAT3 lightDirection;
 	XMFLOAT4 diffuseMaterial;
 	XMFLOAT4 diffuseLight;
+	XMFLOAT4 ambientMaterial;
+	XMFLOAT4 ambientLight;
+	XMFLOAT4 specularMaterial;
+	XMFLOAT4 specularLight;
+	float specularPower;
+	XMFLOAT3 eyePosW;
 };
 
 class Application
@@ -71,6 +77,16 @@ private:
 	XMFLOAT3 _lightDirection;
 	XMFLOAT4 _diffuseMaterial;
 	XMFLOAT4 _diffuseLight;
+	XMFLOAT4 _ambientMaterial;
+	XMFLOAT4 _ambientLight;
+	XMFLOAT4 _specularMaterial;
+	XMFLOAT4 _specularLight;
+	float _specularPower;
+	XMFLOAT3 _eyePosW;
+
+	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
+	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);

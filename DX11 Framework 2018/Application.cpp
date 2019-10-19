@@ -41,12 +41,19 @@ Application::Application()
 	_pConstantBuffer = nullptr;
 
 	// Light direction from surface (XYZ)
-	_lightDirection = XMFLOAT3(1.0f, -0.5f, 1.0f);
+	_lightDirection = XMFLOAT3(0.25, 0.5f, -1.0f);
 	// Diffuse material properties (RGBA)
 	_diffuseMaterial = XMFLOAT4(0.8f, 0.5f, 0.5f, 1.0f);
 	// Diffuse light colour (RGBA)
 	_diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
+	_ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
+	_ambientMaterial = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+
+	_specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	_specularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	_specularPower = 10.0f;
+	_eyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
 
 Application::~Application()
@@ -79,9 +86,9 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	XMStoreFloat4x4(&_world, XMMatrixIdentity());
 
     // Initialize the view matrix
-	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
-	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
+	At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(Eye, At, Up));
 
@@ -734,6 +741,7 @@ void Application::Update()
 	}
 
 	_fTime = t;
+	XMStoreFloat3(&_eyePosW, At);
 }
 
 void Application::Draw()
@@ -767,6 +775,12 @@ void Application::Draw()
 	cb.lightDirection = _lightDirection;
 	cb.diffuseMaterial = _diffuseMaterial;
 	cb.diffuseLight = _diffuseLight;
+	cb.ambientMaterial = _ambientMaterial;
+	cb.ambientLight = _ambientLight;
+	cb.specularMaterial = _specularMaterial;
+	cb.specularLight = _specularLight;
+	cb.specularPower = _specularPower;
+	cb.eyePosW = _eyePosW;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
