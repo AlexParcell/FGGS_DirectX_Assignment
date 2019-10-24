@@ -48,7 +48,7 @@ Application::Application()
 	_diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	_ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
-	_ambientMaterial = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	_ambientMaterial = XMFLOAT4(0.0f, 0.25f, 0.0f, 1.0f);
 
 	_specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	_specularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
