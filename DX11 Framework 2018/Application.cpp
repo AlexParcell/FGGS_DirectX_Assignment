@@ -48,7 +48,7 @@ Application::Application()
 	_diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	_ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
-	_ambientMaterial = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	_ambientMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
 
 	_specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	_specularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -270,28 +270,25 @@ void Application::CalculateVertexNormals(SimpleVertex vertices[], int VertexCoun
 	for (int i = 0; i < VertexCount; i++)
 	{
 		XMVECTOR SumVector = { 0.0f, 0.0f, 0.0f };
-		int occurances = 0;
 
 		for (int j = 0; j < indexCount; j += 3)
 		{
-			if (indices[j] == i || indices[j + 1] == i || indices[i + 2] == i)
+			if (indices[j] == i || indices[j + 1] == i || indices[j + 2] == i)
 			{
 				XMVECTOR a = XMLoadFloat3(&(vertices[indices[j]].Pos));
 				XMVECTOR b = XMLoadFloat3(&vertices[indices[j + 1]].Pos);
 				XMVECTOR c = XMLoadFloat3(&vertices[indices[j + 2]].Pos);
 
 				XMVECTOR ac = XMVectorSubtract(c, a);
-				XMVECTOR bc = XMVectorSubtract(b, c);
+				XMVECTOR bc = XMVectorSubtract(c, b);
 				XMVECTOR polyNormal = XMVector3Cross(ac, bc);
 				XMVECTOR unitNormal = XMVector3Normalize(polyNormal);
 
 				SumVector += unitNormal;
-
-				occurances++;
 			}
 		}
 
-		XMVECTOR FinalNormal = SumVector / occurances;
+		XMVECTOR FinalNormal = XMVector3Normalize(SumVector);
 		XMStoreFloat3(&vertices[i].Normal, FinalNormal);
 	}
 }
