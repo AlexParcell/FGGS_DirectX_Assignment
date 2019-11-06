@@ -161,7 +161,8 @@ HRESULT Application::InitShadersAndInputLayout()
     // Set the input layout
     _pImmediateContext->IASetInputLayout(_pVertexLayout);
 
-	CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR", nullptr, &_pTextureRV);
+	// Create the texture
+	CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR.dds", nullptr, &_pTextureRV);
 	_pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
 
 	// Create the sample state
@@ -179,277 +180,6 @@ HRESULT Application::InitShadersAndInputLayout()
 	_pImmediateContext->PSSetSamplers(0, 1, &_pSamplerLinear);
 
 	return hr;
-}
-
-// To do: figure out how this works source: https://gamedev.stackexchange.com/questions/135943/directx11-texturing-terrain-mesh-with-shared-vertices
-HRESULT Application::MakeGrid(int size)
-{
-	HRESULT hr;
-
-	int dimension = 0;
-
-	if (size < 1)
-	{
-		dimension = 1;
-	}
-	else
-	{
-		dimension = size;
-	}
-
-	dimension++;
-
-	int vertexCount = (dimension + 1) * (dimension + 1);
-	int actualVertexCount = 0;
-	int indexCount = 6 * (dimension * dimension);
-	int actualIndexCount = 0;
-	PlaneIndices = indexCount;
-	SimpleVertex* vertices = new SimpleVertex[vertexCount];
-	WORD* indices = new WORD[indexCount];
-
-	for (int z = 0, index = 0; z < dimension; ++z)
-	{
-		for (int x = 0; x < dimension; ++x, ++index)
-		{
-			vertices[index].Pos = XMFLOAT3(x, 0.0f, z);
-			vertices[index].TexCoord = XMFLOAT2(0.0f, 0.0f);
-			actualVertexCount++;
-		}
-	}
-
-	for (int z = 0, index = 0; z < dimension - 1; ++z)
-	{
-		for (int x = 0; x < dimension - 1; ++x)
-		{
-			indices[index++] = z * dimension + x;
-			indices[index++] = (z + 1) * dimension + x;
-			indices[index++] = (z + 1) * dimension + (x + 1);
-
-			indices[index++] = z * dimension + x;
-			indices[index++] = (z + 1) * dimension + (x + 1);
-			indices[index++] = z * dimension + (x + 1);
-			actualIndexCount += 6;
-		}
-	}
-
-	CalculateVertexNormals(vertices, actualVertexCount, indices, actualIndexCount);
-
-	// do the index buffer
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * indexCount;
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA InitData;
-	ZeroMemory(&InitData, sizeof(InitData));
-	InitData.pSysMem = indices;
-	hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pPlaneIndexBuffer);
-
-	// do the vertex buffer
-	D3D11_BUFFER_DESC vbd;
-	ZeroMemory(&vbd, sizeof(vbd));
-	vbd.Usage = D3D11_USAGE_DEFAULT;
-	vbd.ByteWidth = sizeof(SimpleVertex) * vertexCount;
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vbd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA vInitData;
-	ZeroMemory(&vInitData, sizeof(vInitData));
-	vInitData.pSysMem = vertices;
-
-	hr = _pd3dDevice->CreateBuffer(&vbd, &vInitData, &_pPlaneVertexBuffer);
-
-	delete[] vertices;
-	delete[] indices;
-
-	if (FAILED(hr))
-		return hr;
-
-	float centerOffset = float(dimension / 2) * -1.0f;
-	XMMATRIX world = XMMatrixTranslation(centerOffset, -15.0f, centerOffset) * XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&_planeWorld, world);
-
-	return hr;
-}
-
-void Application::CalculateVertexNormals(SimpleVertex vertices[], int VertexCount, WORD indices[], int indexCount)
-{
-	/*
-	for each vertex,
-	go through each 3 indices, find if the vertex is in there
-	if it is, get the cross product of the other vertices against this one
-	then, normalize it to get it into a unit vector and add it to vectors already done for this vertex
-	go through every indice until done
-	then, divide the sum we have by the occurances to get the averaged normal
-	*/
-
-	for (int i = 0; i < VertexCount; i++)
-	{
-		XMVECTOR SumVector = { 0.0f, 0.0f, 0.0f };
-		int occurances = 0;
-
-		for (int j = 0; j < indexCount; j += 3)
-		{
-			if (indices[j] == i || indices[j + 1] == i || indices[i + 2] == i)
-			{
-				XMVECTOR a = XMLoadFloat3(&(vertices[indices[j]].Pos));
-				XMVECTOR b = XMLoadFloat3(&vertices[indices[j + 1]].Pos);
-				XMVECTOR c = XMLoadFloat3(&vertices[indices[j + 2]].Pos);
-
-				XMVECTOR ac = XMVectorSubtract(c, a);
-				XMVECTOR bc = XMVectorSubtract(b, c);
-				XMVECTOR polyNormal = XMVector3Cross(ac, bc);
-				XMVECTOR unitNormal = XMVector3Normalize(polyNormal);
-
-				SumVector += unitNormal;
-
-				occurances++;
-			}
-		}
-
-		XMVECTOR FinalNormal = SumVector / occurances;
-		XMStoreFloat3(&vertices[i].Normal, FinalNormal);
-	}
-}
-
-HRESULT Application::MakeCube()
-{
-	HRESULT hr;
-
-	// Create index buffer
-	WORD indices[] =
-	{
-		0, 1, 2,
-		2, 3, 0,
-		0, 3, 4,
-		4, 5, 0,
-		0, 5, 6,
-		6, 1, 0,
-		1, 6, 7,
-		7, 2, 1,
-		7, 4, 3,
-		3, 2, 7,
-		4, 7, 6,
-		6, 5, 4,
-	};
-
-	D3D11_BUFFER_DESC ibd;
-	ZeroMemory(&ibd, sizeof(ibd));
-
-	ibd.Usage = D3D11_USAGE_DEFAULT;
-	ibd.ByteWidth = sizeof(WORD) * 36;
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	ibd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA InitIndexData;
-	ZeroMemory(&InitIndexData, sizeof(InitIndexData));
-	InitIndexData.pSysMem = indices;
-	hr = _pd3dDevice->CreateBuffer(&ibd, &InitIndexData, &_pIndexBuffer);
-
-	if (FAILED(hr))
-		return hr;
-
-	// Create vertex buffer
-	SimpleVertex vertices[] =
-	{
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f),XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-	};
-
-	CalculateVertexNormals(vertices, 8, indices, 36);
-
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(SimpleVertex) * 8;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA InitData;
-	ZeroMemory(&InitData, sizeof(InitData));
-	InitData.pSysMem = vertices;
-
-	hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pVertexBuffer);
-
-	if (FAILED(hr))
-		return hr;
-
-	return S_OK;
-}
-
-HRESULT Application::MakePyramid()
-{
-	HRESULT hr;
-
-	WORD pyramidIndices[] =
-	{
-		0, 1, 2,
-		0, 2, 3,
-		0, 3, 4,
-		0, 4, 1,
-		1, 4, 2,
-		2, 4, 3,
-	};
-
-	// index buffer
-
-	SimpleVertex pyramidVertices[] =
-	{
-		{ XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-	};
-
-	CalculateVertexNormals(pyramidVertices, 5, pyramidIndices, 18);
-
-	// vertex buffer
-
-	D3D11_BUFFER_DESC pyramidbd;
-	ZeroMemory(&pyramidbd, sizeof(pyramidbd));
-	pyramidbd.Usage = D3D11_USAGE_DEFAULT;
-	pyramidbd.ByteWidth = sizeof(SimpleVertex) * 5;
-	pyramidbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	pyramidbd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA PyramidInitData;
-	ZeroMemory(&PyramidInitData, sizeof(PyramidInitData));
-	PyramidInitData.pSysMem = pyramidVertices;
-
-	hr = _pd3dDevice->CreateBuffer(&pyramidbd, &PyramidInitData, &_pPyramidVertexBuffer);
-
-	if (FAILED(hr))
-		return hr;
-
-	// index buffer
-
-	D3D11_BUFFER_DESC pyramidibd;
-	ZeroMemory(&pyramidibd, sizeof(pyramidibd));
-	pyramidibd.Usage = D3D11_USAGE_DEFAULT;
-	pyramidibd.ByteWidth = sizeof(WORD) * 18;
-	pyramidibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	pyramidibd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA PyramidIndexInitData;
-	ZeroMemory(&PyramidIndexInitData, sizeof(PyramidIndexInitData));
-	PyramidIndexInitData.pSysMem = pyramidIndices;
-
-	hr = _pd3dDevice->CreateBuffer(&pyramidibd, &PyramidIndexInitData, &_pPyramidIndexBuffer);
-
-	if (FAILED(hr))
-		return hr;
-
-	return S_OK;
 }
 
 HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
@@ -616,9 +346,7 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	MakePyramid();
-	MakeCube();
-	MakeGrid(40);
+	objMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -714,37 +442,6 @@ void Application::Update()
 	XMStoreFloat4x4(&_world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(t * Scalar) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
 
 	XMMATRIX Object1 = XMMatrixTranslation(0.0f, 10.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationX(t * Scalar);
-	XMMATRIX Object2 = XMMatrixTranslation(7.0f, 0.0f, 0.0f) * XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationY(t * Scalar) * Object1;
-	XMMATRIX Object3 = XMMatrixTranslation(5.0f, 0.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationY(t * Scalar);
-	XMMATRIX Object4 = XMMatrixTranslation(0.0f, 10.0f, 0.0f)* XMMatrixScaling(0.5f, 0.5f, 0.5f)* XMMatrixRotationX(t * Scalar) * Object3;
-
-	XMStoreFloat4x4(&_world2, Object1);
-	XMStoreFloat4x4(&_world3, Object2);
-	XMStoreFloat4x4(&_world4, Object3);
-	XMStoreFloat4x4(&_world5, Object4);
-
-	for (int i = 0; i < 100; i++)
-	{
-		XMMATRIX Asteroid = XMMatrixTranslation(float((rand() % 50) - 25), 0.0f, float((rand() % 50) - 25))
-			* XMMatrixScaling(0.2f, 0.2f, 0.2f)
-			* XMMatrixRotationY(t * Scalar)
-			* Object4;
-		XMFLOAT4X4 world;
-		XMStoreFloat4x4(&world, Asteroid);
-
-		if (AsteroidsSet)
-		{
-			asteroids[i] = world;
-		}
-		else
-		{
-			asteroids.push_back(world);
-		}
-	}
-	if (!AsteroidsSet)
-	{
-		AsteroidsSet = true;
-	}
 
 	if (GetAsyncKeyState(VK_UP))
 	{
@@ -806,68 +503,25 @@ void Application::Draw()
     //
     // Renders a triangle
     //
+
+
 	_pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
     _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-
-	_pImmediateContext->DrawIndexed(36, 0, 0);
-
-	world = XMLoadFloat4x4(&_world2);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	_pImmediateContext->DrawIndexed(36, 0, 0);  
-
-	world = XMLoadFloat4x4(&_world3);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	_pImmediateContext->DrawIndexed(36, 0, 0);
-
-	// Set pyramid vertex buffer
-
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
-
-	// Set pyramid index buffer
-	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-	world = XMLoadFloat4x4(&_world2);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	world = XMLoadFloat4x4(&_world4);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	_pImmediateContext->DrawIndexed(18, 0, 0);
-
-	world = XMLoadFloat4x4(&_world5);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	_pImmediateContext->DrawIndexed(18, 0, 0);
-
-	for (int i = 0; i < asteroids.size(); i++)
-	{
-		world = XMLoadFloat4x4(&asteroids[i]);
-		cb.mWorld = XMMatrixTranspose(world);
-		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-		_pImmediateContext->DrawIndexed(18, 0, 0);
-	}
-
 	// PLANE
 
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPlaneVertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetVertexBuffers(0, 1, &objMeshData.VertexBuffer, &objMeshData.VBStride, &objMeshData.VBOffset);
 
 	// Set pyramid index buffer
-	_pImmediateContext->IASetIndexBuffer(_pPlaneIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	_pImmediateContext->IASetIndexBuffer(objMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
-	world = XMLoadFloat4x4(&_planeWorld);
+	world = XMLoadFloat4x4(&_world);
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-	_pImmediateContext->DrawIndexed(PlaneIndices, 0, 0);
+
+	_pImmediateContext->DrawIndexed(objMeshData.IndexCount, 0, 0);
 
     //
     // Present our back buffer to our front buffer

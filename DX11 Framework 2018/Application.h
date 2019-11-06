@@ -7,6 +7,7 @@
 #include <directxcolors.h>
 #include "resource.h"
 #include "DDSTextureLoader.h"
+#include "OBJLoader.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -14,13 +15,6 @@
 
 using namespace DirectX;
 using namespace std;
-
-struct SimpleVertex
-{
-    XMFLOAT3 Pos;
-	XMFLOAT3 Normal;
-	XMFLOAT2 TexCoord;
-};
 
 struct ConstantBuffer
 {
@@ -56,7 +50,7 @@ private:
 	ID3D11Buffer*           _pVertexBuffer;
 	ID3D11Buffer*           _pIndexBuffer;
 	ID3D11Buffer*           _pConstantBuffer;
-	XMFLOAT4X4              _world, _world2, _world3, _world4, _world5, _planeWorld;
+	XMFLOAT4X4              _world;
 	XMFLOAT4X4              _view;
 	XMFLOAT4X4              _projection;
 	ID3D11DepthStencilView* _depthStencilView;
@@ -93,20 +87,17 @@ private:
 	ID3D11ShaderResourceView* _pTextureRV = nullptr;
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
 
+	MeshData objMeshData;
+
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();
 	void Cleanup();
 	HRESULT CompileShaderFromFile(WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
 	HRESULT InitShadersAndInputLayout();
-	HRESULT MakePyramid();
-	HRESULT MakeCube();
-	HRESULT MakeGrid(int size);
 
 	UINT _WindowHeight;
 	UINT _WindowWidth;
-
-	void CalculateVertexNormals(SimpleVertex vertices[], int VertexCount, WORD indices[], int indexCount);
 
 public:
 	Application();

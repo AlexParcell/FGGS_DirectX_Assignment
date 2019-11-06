@@ -41,9 +41,6 @@ struct VS_OUTPUT
 //--------------------------------------------------------------------------------------
 VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0 )
 {
-	Pos.xy += 0.5f * sin(Pos.x) * sin(2.0f * gTime);
-	//Pos.z *= 0.6f + 0.4f * 5sin(2.0f * gTime);
-
     VS_OUTPUT output = (VS_OUTPUT)0;
     output.Pos = mul( Pos, World );
 
