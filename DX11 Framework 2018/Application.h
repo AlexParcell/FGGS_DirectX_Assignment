@@ -6,6 +6,7 @@
 #include <directxmath.h>
 #include <directxcolors.h>
 #include "resource.h"
+#include "DDSTextureLoader.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -18,6 +19,7 @@ struct SimpleVertex
 {
     XMFLOAT3 Pos;
 	XMFLOAT3 Normal;
+	XMFLOAT2 TexCoord;
 };
 
 struct ConstantBuffer
@@ -87,6 +89,9 @@ private:
 	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	ID3D11ShaderResourceView* _pTextureRV = nullptr;
+	ID3D11SamplerState* _pSamplerLinear = nullptr;
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);

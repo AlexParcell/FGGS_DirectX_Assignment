@@ -24,18 +24,22 @@ cbuffer ConstantBuffer : register( b0 )
 	float3 EyePosW;
 }
 
+Texture2D txDiffuse : register(t0);
+SamplerState samLinear : register(s0);
+
 //--------------------------------------------------------------------------------------
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
 	float3 Normal : NORMAL0;
 	float3 PosW : POSITION;
+	float2 TexCoord : TEXCOORD0;
 };
 
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL )
+VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0 )
 {
 	Pos.xy += 0.5f * sin(Pos.x) * sin(2.0f * gTime);
 	//Pos.z *= 0.6f + 0.4f * 5sin(2.0f * gTime);
@@ -45,6 +49,9 @@ VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL )
 
 	output.PosW = output.Pos.xyz;
 
+	float3 toEye = normalize(EyePosW - output.PosW);
+	output.PosW = toEye;
+
     output.Pos = mul( output.Pos, View );
 	output.Pos = mul(output.Pos, Projection);
 
@@ -53,6 +60,8 @@ VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL )
 	float3 normalW = mul(float4(Normal, 0.0f), World).xyz;
 	normalW = normalize(normalW);
 	output.Normal = normalW;
+
+	output.TexCoord = TexCoord;
 
     return output;
 }
@@ -67,7 +76,7 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
 	float3 Normal = normalize(input.Normal);
 
-	float3 toEye = normalize(EyePosW - input.PosW);
+	float3 toEye = input.PosW;
 
 	float3 reflection = reflect(mul(LightVecW, -1.0), Normal);
 
@@ -80,7 +89,9 @@ float4 PS(VS_OUTPUT input) : SV_Target
 	float4 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight);
 	float4 specular = (specularAmount * (SpecularMtrl * SpecularLight));
 
-	Color.rgb = ambient.rgb + diffuse.rgb + specular.rgb;
+	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
+
+	Color.rgb = (ambient.rgb + diffuse.rgb) + textureColour.rgb + specular.rgb;
 	Color.a = DiffuseMtrl.a;
 
 	return Color;

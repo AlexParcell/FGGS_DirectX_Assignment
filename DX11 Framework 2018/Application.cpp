@@ -41,17 +41,17 @@ Application::Application()
 	_pConstantBuffer = nullptr;
 
 	// Light direction from surface (XYZ)
-	_lightDirection = XMFLOAT3(0.25, 0.5f, -1.0f);
+	_lightDirection = XMFLOAT3(0.25f, 0.5f, 1.0f);
 	// Diffuse material properties (RGBA)
-	_diffuseMaterial = XMFLOAT4(0.8f, 0.5f, 0.5f, 1.0f);
+	_diffuseMaterial = XMFLOAT4(0.7f, 0.6f, 0.6f, 1.0f);
 	// Diffuse light colour (RGBA)
-	_diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	_diffuseLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 
-	_ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
-	_ambientMaterial = XMFLOAT4(0.0f, 0.25f, 0.0f, 1.0f);
+	_ambientLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	_ambientMaterial = XMFLOAT4(0.2f, 0.3f, 0.3f, 1.0f);
 
-	_specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	_specularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	_specularMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	_specularLight = XMFLOAT4(2.0f, 2.0f, 2.05f, 1.0f);
 	_specularPower = 10.0f;
 	_eyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
@@ -144,7 +144,8 @@ HRESULT Application::InitShadersAndInputLayout()
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
 	UINT numElements = ARRAYSIZE(layout);
@@ -159,6 +160,23 @@ HRESULT Application::InitShadersAndInputLayout()
 
     // Set the input layout
     _pImmediateContext->IASetInputLayout(_pVertexLayout);
+
+	CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR", nullptr, &_pTextureRV);
+	_pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
+
+	// Create the sample state
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	_pd3dDevice->CreateSamplerState(&sampDesc, &_pSamplerLinear);
+	_pImmediateContext->PSSetSamplers(0, 1, &_pSamplerLinear);
 
 	return hr;
 }
@@ -194,6 +212,7 @@ HRESULT Application::MakeGrid(int size)
 		for (int x = 0; x < dimension; ++x, ++index)
 		{
 			vertices[index].Pos = XMFLOAT3(x, 0.0f, z);
+			vertices[index].TexCoord = XMFLOAT2(0.0f, 0.0f);
 			actualVertexCount++;
 		}
 	}
@@ -336,14 +355,14 @@ HRESULT Application::MakeCube()
 	// Create vertex buffer
 	SimpleVertex vertices[] =
 	{
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f),XMFLOAT3(0.0f, 0.0f, 0.0f)},
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f)},
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, 1.0f),XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
 	};
 
 	CalculateVertexNormals(vertices, 8, indices, 36);
@@ -385,11 +404,11 @@ HRESULT Application::MakePyramid()
 
 	SimpleVertex pyramidVertices[] =
 	{
-		{ XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		{ XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
 	};
 
 	CalculateVertexNormals(pyramidVertices, 5, pyramidIndices, 18);
