@@ -38,20 +38,22 @@ Application::Application()
 	_pVertexLayout = nullptr;
 	_pConstantBuffer = nullptr;
 
+	light = new LightingData();
+
 	// Light direction from surface (XYZ)
-	_lightDirection = XMFLOAT3(0.25f, 0.5f, 1.0f);
+	light->lightDirection = XMFLOAT3(0.25f, 0.5f, 1.0f);
 	// Diffuse material properties (RGBA)
-	_diffuseMaterial = XMFLOAT4(0.7f, 0.6f, 0.6f, 1.0f);
+	light->diffuseMaterial = XMFLOAT4(0.7f, 0.6f, 0.6f, 1.0f);
 	// Diffuse light colour (RGBA)
-	_diffuseLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	light->diffuseLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 
-	_ambientLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	_ambientMaterial = XMFLOAT4(0.2f, 0.3f, 0.3f, 1.0f);
+	light->ambientLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	light->ambientMaterial = XMFLOAT4(0.2f, 0.3f, 0.3f, 1.0f);
 
-	_specularMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	_specularLight = XMFLOAT4(2.0f, 2.0f, 2.05f, 1.0f);
-	_specularPower = 10.0f;
-	_eyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	light->specularMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	light->specularLight = XMFLOAT4(2.0f, 2.0f, 2.05f, 1.0f);
+	light->specularPower = 10.0f;
+	light->eyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
 
 Application::~Application()
@@ -80,12 +82,14 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
         return E_FAIL;
     }
 
-    // Initialize the view matrix
-	Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
-	At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	cam = new CameraData();
 
-	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(Eye, At, Up));
+    // Initialize the view matrix
+	cam->eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
+	cam->right = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	cam->up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->eye, cam->right, cam->up));
 
     // Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT) _WindowHeight, 0.01f, 100.0f));
@@ -464,7 +468,7 @@ void Application::Update()
 	}
 
 	_fTime = t;
-	XMStoreFloat3(&_eyePosW, At);
+	XMStoreFloat3(&light->eyePosW, cam->right);
 }
 
 void Application::Draw()
@@ -486,15 +490,15 @@ void Application::Draw()
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
 	cb.gTime = _fTime;
-	cb.lightDirection = _lightDirection;
-	cb.diffuseMaterial = _diffuseMaterial;
-	cb.diffuseLight = _diffuseLight;
-	cb.ambientMaterial = _ambientMaterial;
-	cb.ambientLight = _ambientLight;
-	cb.specularMaterial = _specularMaterial;
-	cb.specularLight = _specularLight;
-	cb.specularPower = _specularPower;
-	cb.eyePosW = _eyePosW;
+	cb.lightDirection = light->lightDirection;
+	cb.diffuseMaterial = light->diffuseMaterial;
+	cb.diffuseLight = light->diffuseLight;
+	cb.ambientMaterial = light->ambientMaterial;
+	cb.ambientLight = light->ambientLight;
+	cb.specularMaterial = light->specularMaterial;
+	cb.specularLight = light->specularLight;
+	cb.specularPower = light->specularPower;
+	cb.eyePosW = light->eyePosW;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 

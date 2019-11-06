@@ -16,9 +16,8 @@
 using namespace DirectX;
 using namespace std;
 
-class GameObject
+struct GameObject
 {
-public:
 	MeshData mesh;
 	XMFLOAT4X4 world;
 
@@ -29,9 +28,24 @@ public:
 	}
 };
 
-class Camera
+struct LightingData
 {
+	XMFLOAT3 lightDirection;
+	XMFLOAT4 diffuseMaterial;
+	XMFLOAT4 diffuseLight;
+	XMFLOAT4 ambientMaterial;
+	XMFLOAT4 ambientLight;
+	XMFLOAT4 specularMaterial;
+	XMFLOAT4 specularLight;
+	float specularPower;
+	XMFLOAT3 eyePosW;
+};
 
+struct CameraData
+{
+	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
+	XMVECTOR right = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 };
 
 struct ConstantBuffer
@@ -76,21 +90,9 @@ private:
 
 	float _fTime = 0.0f;
 
-	XMFLOAT3 _lightDirection;
-	XMFLOAT4 _diffuseMaterial;
-	XMFLOAT4 _diffuseLight;
-	XMFLOAT4 _ambientMaterial;
-	XMFLOAT4 _ambientLight;
-	XMFLOAT4 _specularMaterial;
-	XMFLOAT4 _specularLight;
-	float _specularPower;
-	XMFLOAT3 _eyePosW;
-
+	CameraData* cam = nullptr;
+	LightingData* light = nullptr;
 	GameObject* cube = nullptr;
-
-	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
-	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	ID3D11ShaderResourceView* _pTextureRV = nullptr;
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
