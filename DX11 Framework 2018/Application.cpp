@@ -36,8 +36,6 @@ Application::Application()
 	_pVertexShader = nullptr;
 	_pPixelShader = nullptr;
 	_pVertexLayout = nullptr;
-	_pVertexBuffer = nullptr;
-	_pIndexBuffer = nullptr;
 	_pConstantBuffer = nullptr;
 
 	// Light direction from surface (XYZ)
@@ -81,9 +79,6 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 
         return E_FAIL;
     }
-
-	// Initialize the world matrix
-	XMStoreFloat4x4(&_world, XMMatrixIdentity());
 
     // Initialize the view matrix
 	Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
@@ -346,7 +341,7 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	objMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
+	cube = new GameObject(OBJLoader::Load("cube.obj", _pd3dDevice, false));
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -390,6 +385,8 @@ HRESULT Application::InitDevice()
 
 void Application::Cleanup()
 {
+	delete cube;
+	
     if (_pImmediateContext) _pImmediateContext->ClearState();
 
 	if (_depthStencilView) _depthStencilView->Release();
@@ -398,8 +395,6 @@ void Application::Cleanup()
 	if (_fillMode) _fillMode->Release();
 
     if (_pConstantBuffer) _pConstantBuffer->Release();
-    if (_pVertexBuffer) _pVertexBuffer->Release();
-    if (_pIndexBuffer) _pIndexBuffer->Release();
     if (_pVertexLayout) _pVertexLayout->Release();
     if (_pVertexShader) _pVertexShader->Release();
     if (_pPixelShader) _pPixelShader->Release();
@@ -416,7 +411,14 @@ void Application::Update()
 
     if (_driverType == D3D_DRIVER_TYPE_REFERENCE)
     {
-        t += (float) XM_PI * 0.0125f;
+		if (Reverse)
+		{
+			t -= (float)XM_PI * 0.0125f;
+		}
+		else
+		{
+			t += (float)XM_PI * 0.0125f;
+		}
     }
     else
     {
@@ -427,21 +429,26 @@ void Application::Update()
             dwTimeStart = dwTimeCur;
 
         t = (dwTimeCur - dwTimeStart) / 1000.0f;
-    }
 
-	float Scalar = 1.0f;
+		if (Reverse)
+		{
+			t -= t * 2;
+		}
+    }
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		Scalar = -1.0f;
+		Reverse = true;
+	}
+	else
+	{
+		Reverse = false;
 	}
 
     //
     // Animate the cube
     //
-	XMStoreFloat4x4(&_world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(t * Scalar) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
-
-	XMMATRIX Object1 = XMMatrixTranslation(0.0f, 10.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixRotationX(t * Scalar);
+	XMStoreFloat4x4(&cube->world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(t) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
 
 	if (GetAsyncKeyState(VK_UP))
 	{
@@ -469,22 +476,13 @@ void Application::Draw()
     _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, ClearColor);
 	_pImmediateContext->ClearDepthStencilView(_depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	XMMATRIX world = XMLoadFloat4x4(&_world);
 	XMMATRIX view = XMLoadFloat4x4(&_view);
 	XMMATRIX projection = XMLoadFloat4x4(&_projection);
-
-	UINT stride = sizeof(SimpleVertex);
-	UINT offset = 0;
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
-
-	// Set cube index buffer
-	_pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
     //
     // Update variables
     //
     ConstantBuffer cb;
-	cb.mWorld = XMMatrixTranspose(world);
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
 	cb.gTime = _fTime;
@@ -504,24 +502,19 @@ void Application::Draw()
     // Renders a triangle
     //
 
+	XMMATRIX world = XMLoadFloat4x4(&cube->world);
+	cb.mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
 	_pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
     _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-	// PLANE
 
-	_pImmediateContext->IASetVertexBuffers(0, 1, &objMeshData.VertexBuffer, &objMeshData.VBStride, &objMeshData.VBOffset);
+	_pImmediateContext->IASetVertexBuffers(0, 1, &cube->mesh.VertexBuffer, &cube->mesh.VBStride, &cube->mesh.VBOffset);
+	_pImmediateContext->IASetIndexBuffer(cube->mesh.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
-	// Set pyramid index buffer
-	_pImmediateContext->IASetIndexBuffer(objMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-	world = XMLoadFloat4x4(&_world);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-
-	_pImmediateContext->DrawIndexed(objMeshData.IndexCount, 0, 0);
+	_pImmediateContext->DrawIndexed(cube->mesh.IndexCount, 0, 0);
 
     //
     // Present our back buffer to our front buffer

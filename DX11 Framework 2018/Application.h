@@ -16,6 +16,24 @@
 using namespace DirectX;
 using namespace std;
 
+class GameObject
+{
+public:
+	MeshData mesh;
+	XMFLOAT4X4 world;
+
+	GameObject(MeshData _mesh)
+	{
+		mesh = _mesh;
+		XMStoreFloat4x4(&world, XMMatrixIdentity());
+	}
+};
+
+class Camera
+{
+
+};
+
 struct ConstantBuffer
 {
 	XMMATRIX mWorld;
@@ -47,10 +65,7 @@ private:
 	ID3D11VertexShader*     _pVertexShader;
 	ID3D11PixelShader*      _pPixelShader;
 	ID3D11InputLayout*      _pVertexLayout;
-	ID3D11Buffer*           _pVertexBuffer;
-	ID3D11Buffer*           _pIndexBuffer;
 	ID3D11Buffer*           _pConstantBuffer;
-	XMFLOAT4X4              _world;
 	XMFLOAT4X4              _view;
 	XMFLOAT4X4              _projection;
 	ID3D11DepthStencilView* _depthStencilView;
@@ -58,15 +73,6 @@ private:
 	ID3D11RasterizerState* _wireFrame;
 	ID3D11RasterizerState* _fillMode;
 	bool Wireframe = false;
-	vector<XMFLOAT4X4> asteroids;
-	bool AsteroidsSet = false;
-
-	ID3D11Buffer* _pPyramidVertexBuffer;
-	ID3D11Buffer* _pPyramidIndexBuffer;
-
-	ID3D11Buffer* _pPlaneVertexBuffer;
-	ID3D11Buffer* _pPlaneIndexBuffer;
-	int PlaneIndices;
 
 	float _fTime = 0.0f;
 
@@ -80,6 +86,8 @@ private:
 	float _specularPower;
 	XMFLOAT3 _eyePosW;
 
+	GameObject* cube = nullptr;
+
 	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -87,7 +95,7 @@ private:
 	ID3D11ShaderResourceView* _pTextureRV = nullptr;
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
 
-	MeshData objMeshData;
+	bool Reverse = false;
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
