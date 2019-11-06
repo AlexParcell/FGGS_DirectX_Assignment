@@ -345,7 +345,7 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	cube = new GameObject(OBJLoader::Load("cube.obj", _pd3dDevice, false));
+	cube = MakeGameObject(OBJLoader::Load("cube.obj", _pd3dDevice, false));
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -510,10 +510,10 @@ void Application::Draw()
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-	_pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
+	_pImmediateContext->VSSetShader(cube->vertexShader, nullptr, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
     _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
-	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
+	_pImmediateContext->PSSetShader(cube->pixelShader, nullptr, 0);
 
 	_pImmediateContext->IASetVertexBuffers(0, 1, &cube->mesh.VertexBuffer, &cube->mesh.VBStride, &cube->mesh.VBOffset);
 	_pImmediateContext->IASetIndexBuffer(cube->mesh.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
@@ -524,4 +524,13 @@ void Application::Draw()
     // Present our back buffer to our front buffer
     //
     _pSwapChain->Present(0, 0);
+}
+
+GameObject* Application::MakeGameObject(MeshData mesh)
+{
+	GameObject* object = new GameObject(mesh);
+	object->vertexShader = _pVertexShader;
+	object->pixelShader = _pPixelShader;
+	object->constantBuffer = _pConstantBuffer;
+	return object;
 }

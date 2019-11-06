@@ -20,6 +20,13 @@ struct GameObject
 {
 	MeshData mesh;
 	XMFLOAT4X4 world;
+	ID3D11VertexShader* vertexShader;
+	ID3D11PixelShader* pixelShader;
+	ID3D11Buffer* constantBuffer;
+
+	XMFLOAT3 Position;
+	XMFLOAT3 Scale;
+	XMFLOAT3 Rotation;
 
 	GameObject(MeshData _mesh)
 	{
@@ -108,6 +115,8 @@ private:
 
 	UINT _WindowHeight;
 	UINT _WindowWidth;
+
+	GameObject* MakeGameObject(MeshData mesh);
 
 public:
 	Application();
