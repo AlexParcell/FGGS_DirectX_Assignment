@@ -82,10 +82,10 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
         return E_FAIL;
     }
 
-	cam = new CameraData();
+	cam = new Camera(this);
 
     // Initialize the view matrix
-	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->eye, cam->direction, cam->up));
+	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->GetEye(), cam->GetDirection(), cam->GetUp()));
 
     // Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT) _WindowHeight, 0.01f, 100.0f));
@@ -341,7 +341,7 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	cube = MakeGameObject(OBJLoader::Load("cube.obj", _pd3dDevice, false));
+	cube = new GameObject(OBJLoader::Load("cube.obj", _pd3dDevice, false), this);
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -386,6 +386,7 @@ HRESULT Application::InitDevice()
 void Application::Cleanup()
 {
 	delete cube;
+	delete cam;
 	
     if (_pImmediateContext) _pImmediateContext->ClearState();
 
@@ -448,7 +449,7 @@ void Application::Update()
     //
     // Animate the cube
     //
-	XMStoreFloat4x4(&cube->world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(t) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
+	cube->Update();
 
 	/*if (GetAsyncKeyState(VK_UP))
 	{
@@ -463,92 +464,12 @@ void Application::Update()
 		Wireframe = !Wireframe;
 	}*/
 
-	XMVECTOR globalUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	cam->Update();
 
-	cam->forward = XMVector3Normalize(cam->direction - cam->eye);
-	cam->right = XMVector3Normalize(XMVector3Cross(globalUp, cam->forward));
-	cam->up = XMVector3Normalize(XMVector3Cross(cam->forward, cam->right));
-
-	if (GetAsyncKeyState(0x57)) // W, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	{
-		cam->eye += (cam->up * 0.01f);
-		cam->direction += (cam->up * 0.01f);
-	}
-
-	if (GetAsyncKeyState(0x53)) // S, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	{
-		cam->eye -= (cam->up * 0.01f);
-		cam->direction -= (cam->up * 0.01f);
-	}
-
-	if (GetAsyncKeyState(0x41)) // A, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	{
-		cam->eye -= (cam->right * 0.01f);
-		cam->direction -= (cam->right * 0.01f);
-	}
-
-	if (GetAsyncKeyState(0x44)) // D, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	{
-		cam->eye += (cam->right * 0.01f);
-		cam->direction += (cam->right * 0.01f);
-	}
-
-	if (GetAsyncKeyState(0x50)) // P, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	{
-		cam->eye += (cam->forward * 0.01f);
-		cam->direction += (cam->forward * 0.01f);
-	}
-
-	if (GetAsyncKeyState(0x4F)) // O, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	{
-		cam->eye -= (cam->forward * 0.01f);
-		cam->direction -= (cam->forward * 0.01f);
-	}
-
-	if (GetAsyncKeyState(VK_UP))
-	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, cam->direction);
-		directionVector.y += 0.01f;
-
-		cam->direction = XMLoadFloat4(&directionVector);
-	}
-
-	if (GetAsyncKeyState(VK_DOWN))
-	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, cam->direction);
-		directionVector.y -= 0.01f;
-
-		cam->direction = XMLoadFloat4(&directionVector);
-	}
-
-	if (GetAsyncKeyState(VK_LEFT))
-	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, cam->direction);
-		directionVector.x -= 0.01f;
-
-		cam->direction = XMLoadFloat4(&directionVector);
-	}
-
-	if (GetAsyncKeyState(VK_RIGHT))
-	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, cam->direction);
-		directionVector.x += 0.01f;
-
-		cam->direction = XMLoadFloat4(&directionVector);
-	}
-
-	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->eye, cam->direction, cam->up));
+	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->GetEye(), cam->GetDirection(), cam->GetUp()));
 
 	_fTime = t;
-	XMStoreFloat3(&light->eyePosW, cam->direction);
+	XMStoreFloat3(&light->eyePosW, cam->GetDirection());
 }
 
 void Application::Draw()
@@ -582,35 +503,17 @@ void Application::Draw()
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
+	currentCB = &cb;
+
     //
     // Renders a triangle
     //
 
-	XMMATRIX world = XMLoadFloat4x4(&cube->world);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	_pImmediateContext->VSSetShader(cube->vertexShader, nullptr, 0);
-	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
-    _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
-	_pImmediateContext->PSSetShader(cube->pixelShader, nullptr, 0);
-
-	_pImmediateContext->IASetVertexBuffers(0, 1, &cube->mesh.VertexBuffer, &cube->mesh.VBStride, &cube->mesh.VBOffset);
-	_pImmediateContext->IASetIndexBuffer(cube->mesh.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-	_pImmediateContext->DrawIndexed(cube->mesh.IndexCount, 0, 0);
-
+	cube->SetPixelShader(_pPixelShader);
+	cube->SetVertexShader(_pVertexShader);
+	cube->Draw();
     //
     // Present our back buffer to our front buffer
     //
     _pSwapChain->Present(0, 0);
-}
-
-GameObject* Application::MakeGameObject(MeshData mesh)
-{
-	GameObject* object = new GameObject(mesh);
-	object->vertexShader = _pVertexShader;
-	object->pixelShader = _pPixelShader;
-	object->constantBuffer = _pConstantBuffer;
-	return object;
 }

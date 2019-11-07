@@ -8,6 +8,8 @@
 #include "resource.h"
 #include "DDSTextureLoader.h"
 #include "OBJLoader.h"
+#include "GameObject.h"
+#include "Camera.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -15,25 +17,6 @@
 
 using namespace DirectX;
 using namespace std;
-
-struct GameObject
-{
-	MeshData mesh;
-	XMFLOAT4X4 world;
-	ID3D11VertexShader* vertexShader;
-	ID3D11PixelShader* pixelShader;
-	ID3D11Buffer* constantBuffer;
-
-	XMFLOAT3 Position;
-	XMFLOAT3 Scale;
-	XMFLOAT3 Rotation;
-
-	GameObject(MeshData _mesh)
-	{
-		mesh = _mesh;
-		XMStoreFloat4x4(&world, XMMatrixIdentity());
-	}
-};
 
 struct LightingData
 {
@@ -46,15 +29,6 @@ struct LightingData
 	XMFLOAT4 specularLight;
 	float specularPower;
 	XMFLOAT3 eyePosW;
-};
-
-struct CameraData
-{
-	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
-	XMVECTOR direction = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR right = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR forward = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 };
 
 struct ConstantBuffer
@@ -101,7 +75,7 @@ private:
 
 	float _fTime = 0.0f;
 
-	CameraData* cam = nullptr;
+	Camera* cam = nullptr;
 	LightingData* light = nullptr;
 	GameObject* cube = nullptr;
 
@@ -109,6 +83,8 @@ private:
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
 
 	bool Reverse = false;
+
+	ConstantBuffer* currentCB;
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
@@ -130,5 +106,10 @@ public:
 
 	void Update();
 	void Draw();
+
+	ConstantBuffer* GetCurrentConstantBuffer() { return currentCB; }
+	ID3D11Buffer* GetConstantBuffer() { return _pConstantBuffer; }
+	ID3D11DeviceContext* GetImmediateContext() { return _pImmediateContext; }
+	float GetTime() { return _fTime; }
 };
 
