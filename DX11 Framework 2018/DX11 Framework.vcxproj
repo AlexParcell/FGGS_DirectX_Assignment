@@ -392,6 +392,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="OBJLoader.h" />
     <CLInclude Include="resource.h" />
+    <ClInclude Include="Structures.h" />
     <ResourceCompile Include="DX11 Framework.rc" />
   </ItemGroup>
   <ItemGroup>

@@ -25,35 +25,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 Application::Application()
 {
-	_hInst = nullptr;
-	_hWnd = nullptr;
-	_driverType = D3D_DRIVER_TYPE_NULL;
-	_featureLevel = D3D_FEATURE_LEVEL_11_0;
-	_pd3dDevice = nullptr;
-	_pImmediateContext = nullptr;
-	_pSwapChain = nullptr;
-	_pRenderTargetView = nullptr;
-	_pVertexShader = nullptr;
-	_pPixelShader = nullptr;
-	_pVertexLayout = nullptr;
-	_pConstantBuffer = nullptr;
-
 	light = new LightingData();
-
-	// Light direction from surface (XYZ)
-	light->lightDirection = XMFLOAT3(0.25f, 0.5f, 1.0f);
-	// Diffuse material properties (RGBA)
-	light->diffuseMaterial = XMFLOAT4(0.7f, 0.6f, 0.6f, 1.0f);
-	// Diffuse light colour (RGBA)
-	light->diffuseLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-
-	light->ambientLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	light->ambientMaterial = XMFLOAT4(0.2f, 0.3f, 0.3f, 1.0f);
-
-	light->specularMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	light->specularLight = XMFLOAT4(2.0f, 2.0f, 2.05f, 1.0f);
-	light->specularPower = 10.0f;
-	light->eyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
 
 Application::~Application()
@@ -474,9 +446,7 @@ void Application::Update()
 
 void Application::Draw()
 {
-    //
     // Clear the back buffer
-    //
     float ClearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f}; // red,green,blue,alpha
     _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, ClearColor);
 	_pImmediateContext->ClearDepthStencilView(_depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -484,9 +454,7 @@ void Application::Draw()
 	XMMATRIX view = XMLoadFloat4x4(&_view);
 	XMMATRIX projection = XMLoadFloat4x4(&_projection);
 
-    //
-    // Update variables
-    //
+    // Update Constant Buffer
     ConstantBuffer cb;
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
@@ -505,15 +473,11 @@ void Application::Draw()
 
 	currentCB = &cb;
 
-    //
-    // Renders a triangle
-    //
-
+    // Render objects
 	cube->SetPixelShader(_pPixelShader);
 	cube->SetVertexShader(_pVertexShader);
 	cube->Draw();
-    //
+
     // Present our back buffer to our front buffer
-    //
     _pSwapChain->Present(0, 0);
 }
