@@ -85,11 +85,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	cam = new CameraData();
 
     // Initialize the view matrix
-	cam->eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
-	cam->right = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	cam->up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->eye, cam->right, cam->up));
+	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->eye, cam->direction, cam->up));
 
     // Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT) _WindowHeight, 0.01f, 100.0f));
@@ -467,126 +463,92 @@ void Application::Update()
 		Wireframe = !Wireframe;
 	}*/
 
+	XMVECTOR globalUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	cam->forward = XMVector3Normalize(cam->direction - cam->eye);
+	cam->right = XMVector3Normalize(XMVector3Cross(globalUp, cam->forward));
+	cam->up = XMVector3Normalize(XMVector3Cross(cam->forward, cam->right));
+
 	if (GetAsyncKeyState(0x57)) // W, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 	{
-		XMFLOAT4 eyeVector;
-		XMFLOAT4 rightVector;
-		XMStoreFloat4(&eyeVector, cam->eye);
-		eyeVector.y += 0.01f;
-
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.y += 0.01f;
-
-		cam->eye = XMLoadFloat4(&eyeVector);
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->eye += (cam->up * 0.01f);
+		cam->direction += (cam->up * 0.01f);
 	}
 
 	if (GetAsyncKeyState(0x53)) // S, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 	{
-		XMFLOAT4 eyeVector;
-		XMFLOAT4 rightVector;
-		XMStoreFloat4(&eyeVector, cam->eye);
-		eyeVector.y -= 0.01f;
-
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.y -= 0.01f;
-
-		cam->eye = XMLoadFloat4(&eyeVector);
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->eye -= (cam->up * 0.01f);
+		cam->direction -= (cam->up * 0.01f);
 	}
 
 	if (GetAsyncKeyState(0x41)) // A, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 	{
-		XMFLOAT4 eyeVector;
-		XMFLOAT4 rightVector;
-		XMStoreFloat4(&eyeVector, cam->eye);
-		eyeVector.x -= 0.01f;
-
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.x -= 0.01f;
-
-		cam->eye = XMLoadFloat4(&eyeVector);
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->eye -= (cam->right * 0.01f);
+		cam->direction -= (cam->right * 0.01f);
 	}
 
 	if (GetAsyncKeyState(0x44)) // D, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 	{
-		XMFLOAT4 eyeVector;
-		XMFLOAT4 rightVector;
-		XMStoreFloat4(&eyeVector, cam->eye);
-		eyeVector.x += 0.01f;
-
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.x += 0.01f;
-
-		cam->eye = XMLoadFloat4(&eyeVector);
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->eye += (cam->right * 0.01f);
+		cam->direction += (cam->right * 0.01f);
 	}
 
 	if (GetAsyncKeyState(0x50)) // P, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 	{
-		XMFLOAT4 eyeVector;
-		XMStoreFloat4(&eyeVector, cam->eye);
-
-		if (eyeVector.z < 0.0f)
-			eyeVector.z += 0.01f;
-
-		cam->eye = XMLoadFloat4(&eyeVector);
+		cam->eye += (cam->forward * 0.01f);
+		cam->direction += (cam->forward * 0.01f);
 	}
 
 	if (GetAsyncKeyState(0x4F)) // O, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 	{
-		XMFLOAT4 eyeVector;
-		XMStoreFloat4(&eyeVector, cam->eye);
-		eyeVector.z -= 0.01f;
-
-		cam->eye = XMLoadFloat4(&eyeVector);
+		cam->eye -= (cam->forward * 0.01f);
+		cam->direction -= (cam->forward * 0.01f);
 	}
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		XMFLOAT4 rightVector;
+		XMFLOAT4 directionVector;
 
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.y += 0.01f;
+		XMStoreFloat4(&directionVector, cam->direction);
+		directionVector.y += 0.01f;
 
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->direction = XMLoadFloat4(&directionVector);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		XMFLOAT4 rightVector;
+		XMFLOAT4 directionVector;
 
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.y -= 0.01f;
+		XMStoreFloat4(&directionVector, cam->direction);
+		directionVector.y -= 0.01f;
 
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->direction = XMLoadFloat4(&directionVector);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))
 	{
-		XMFLOAT4 rightVector;
+		XMFLOAT4 directionVector;
 
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.x -= 0.01f;
+		XMStoreFloat4(&directionVector, cam->direction);
+		directionVector.x -= 0.01f;
 
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->direction = XMLoadFloat4(&directionVector);
 	}
 
 	if (GetAsyncKeyState(VK_RIGHT))
 	{
-		XMFLOAT4 rightVector;
+		XMFLOAT4 directionVector;
 
-		XMStoreFloat4(&rightVector, cam->right);
-		rightVector.x += 0.01f;
+		XMStoreFloat4(&directionVector, cam->direction);
+		directionVector.x += 0.01f;
 
-		cam->right = XMLoadFloat4(&rightVector);
+		cam->direction = XMLoadFloat4(&directionVector);
 	}
 
-	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->eye, cam->right, cam->up));
+	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->eye, cam->direction, cam->up));
 
 	_fTime = t;
-	XMStoreFloat3(&light->eyePosW, cam->right);
+	XMStoreFloat3(&light->eyePosW, cam->direction);
 }
 
 void Application::Draw()

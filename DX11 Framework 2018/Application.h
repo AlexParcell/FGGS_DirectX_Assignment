@@ -51,8 +51,10 @@ struct LightingData
 struct CameraData
 {
 	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
-	XMVECTOR right = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR direction = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR right = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR forward = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 };
 
 struct ConstantBuffer
