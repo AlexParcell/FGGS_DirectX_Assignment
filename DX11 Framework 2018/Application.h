@@ -95,6 +95,8 @@ private:
 	ID3D11RasterizerState* _fillMode;
 	bool Wireframe = false;
 
+	POINT MousePosition;
+
 	float _fTime = 0.0f;
 
 	CameraData* cam = nullptr;
