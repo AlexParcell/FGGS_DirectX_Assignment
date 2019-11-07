@@ -1,9 +1,21 @@
 #include "GameObject.h"
 #include "Application.h"
 
+GameObject::GameObject(MeshData _mesh, Application* _app)
+{
+	mesh = _mesh;
+	app = _app;
+	XMStoreFloat4x4(&world, XMMatrixIdentity());
+}
+
 void GameObject::Update()
 {
-	XMStoreFloat4x4(&world, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixRotationY(app->GetTime()) * XMMatrixTranslation(0.0f, 0.0f, 0.0f));
+	XMFLOAT3 rot;
+	XMStoreFloat3(&rot, Rotation);
+	rot.y = app->GetTime();
+	Rotation = XMLoadFloat3(&rot);
+
+	XMStoreFloat4x4(&world, XMMatrixScalingFromVector(Scale) * XMMatrixRotationRollPitchYawFromVector(Rotation) * XMMatrixTranslationFromVector(Position));
 }
 
 void GameObject::Draw()

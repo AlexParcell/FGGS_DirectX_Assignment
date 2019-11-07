@@ -313,7 +313,21 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	cube = new GameObject(OBJLoader::Load("cube.obj", _pd3dDevice, false), this);
+	MeshData cube = OBJLoader::Load("cube.obj", _pd3dDevice, false);
+
+	for (int i = 0; i < GRID_SIZE; i++)
+	{
+		for (int j = 0; j < GRID_SIZE; j++)
+		{
+			GameObject* temp = new GameObject(cube, this);
+			XMFLOAT3 Position;
+			XMStoreFloat3(&Position, temp->GetPosition());
+			Position.x = i * 10;
+			Position.z = j * 10;
+			temp->SetPosition(XMLoadFloat3(&Position));
+			cubes.push_back(temp);
+		}
+	}
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -357,7 +371,10 @@ HRESULT Application::InitDevice()
 
 void Application::Cleanup()
 {
-	delete cube;
+	for (int i = 0; i < cubes.size(); i++)
+	{
+		delete cubes[i];
+	}
 	delete cam;
 	
     if (_pImmediateContext) _pImmediateContext->ClearState();
@@ -421,7 +438,11 @@ void Application::Update()
     //
     // Animate the cube
     //
-	cube->Update();
+
+	for (int i = 0; i < cubes.size(); i++)
+	{
+		cubes[i]->Update();
+	}
 
 	/*if (GetAsyncKeyState(VK_UP))
 	{
@@ -474,9 +495,13 @@ void Application::Draw()
 	currentCB = &cb;
 
     // Render objects
-	cube->SetPixelShader(_pPixelShader);
-	cube->SetVertexShader(_pVertexShader);
-	cube->Draw();
+
+	for (int i = 0; i < cubes.size(); i++)
+	{
+		cubes[i]->SetPixelShader(_pPixelShader);
+		cubes[i]->SetVertexShader(_pVertexShader);
+		cubes[i]->Draw();
+	}
 
     // Present our back buffer to our front buffer
     _pSwapChain->Present(0, 0);

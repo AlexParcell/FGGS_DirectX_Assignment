@@ -17,6 +17,8 @@
 #include <time.h>
 #include <vector>
 
+#define GRID_SIZE 5
+
 using namespace DirectX;
 using namespace std;
 
@@ -46,8 +48,9 @@ private:
 
 	Camera* cam = nullptr;
 	LightingData* light = nullptr;
-	GameObject* cube = nullptr;
 	ConstantBuffer* currentCB;
+
+	vector<GameObject*> cubes;
 
 	bool Reverse = false;
 	bool Wireframe = false;

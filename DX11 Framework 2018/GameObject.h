@@ -14,7 +14,6 @@ class Application;
 class GameObject
 {
 public:
-
 	MeshData mesh;
 	XMFLOAT4X4 world;
 	ID3D11VertexShader* vertexShader;
@@ -22,22 +21,20 @@ public:
 
 	Application* app;
 
-	XMFLOAT3 Position;
-	XMFLOAT3 Scale;
-	XMFLOAT3 Rotation;
+	XMVECTOR Position = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR Scale = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
+	XMVECTOR Rotation = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	
 public:
 
-	GameObject(MeshData _mesh, Application* _app)
-	{
-		mesh = _mesh;
-		app = _app;
-		XMStoreFloat4x4(&world, XMMatrixIdentity());
-	}
+	GameObject(MeshData _mesh, Application* _app);
 
 	void Draw();
 	void Update();
 
 	void SetVertexShader(ID3D11VertexShader* vs) { vertexShader = vs; }
 	void SetPixelShader(ID3D11PixelShader* ps) { pixelShader = ps; }
+
+	XMVECTOR GetPosition() { return Position; }
+	void SetPosition(XMVECTOR pos) { Position = pos; }
 };
