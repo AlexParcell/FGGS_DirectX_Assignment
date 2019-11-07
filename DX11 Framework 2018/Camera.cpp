@@ -47,41 +47,21 @@ void Camera::Update()
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, direction);
-		directionVector.y += 0.01f;
-
-		direction = XMLoadFloat4(&directionVector);
+		direction += (up * 0.01f);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, direction);
-		directionVector.y -= 0.01f;
-
-		direction = XMLoadFloat4(&directionVector);
+		direction -= (up * 0.01f);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))
 	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, direction);
-		directionVector.x -= 0.01f;
-
-		direction = XMLoadFloat4(&directionVector);
+		direction -= (right * 0.01f);
 	}
 
 	if (GetAsyncKeyState(VK_RIGHT))
 	{
-		XMFLOAT4 directionVector;
-
-		XMStoreFloat4(&directionVector, direction);
-		directionVector.x += 0.01f;
-
-		direction = XMLoadFloat4(&directionVector);
+		direction += (right * 0.01f);
 	}
 }
