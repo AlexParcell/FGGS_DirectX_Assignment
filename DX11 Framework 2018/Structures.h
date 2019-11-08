@@ -11,15 +11,21 @@ using namespace DirectX;
 
 struct LightingData
 {
-	XMFLOAT3 lightDirection = XMFLOAT3(0.25f, 0.5f, 1.0f); // Light direction from surface (XYZ)
-	XMFLOAT4 diffuseMaterial = XMFLOAT4(0.7f, 0.6f, 0.6f, 1.0f); // Diffuse material properties (RGBA)
-	XMFLOAT4 diffuseLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f); // Diffuse light colour (RGBA)
-	XMFLOAT4 ambientMaterial = XMFLOAT4(0.2f, 0.3f, 0.3f, 1.0f);
-	XMFLOAT4 ambientLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	XMFLOAT4 specularMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	XMFLOAT4 specularLight = XMFLOAT4(2.0f, 2.0f, 2.05f, 1.0f);
-	float specularPower = 10.0f;
-	XMFLOAT3 eyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 lightDirection = XMFLOAT3(0.25f, 0.5f, -1.0f); // Light direction from surface (XYZ)
+
+	// Diffuse Light
+	XMFLOAT4 diffuseMaterial = XMFLOAT4(0.8f, 0.5f, 0.5f, 1.0f); // Diffuse material properties (RGBA)
+	XMFLOAT4 diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f); // Diffuse light colour (RGBA)
+
+	// Ambient Light
+	XMFLOAT4 ambientMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f); // Ambient material properties (RGBA)
+	XMFLOAT4 ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f); // Ambient light colour (RGBA)
+
+	// Specular Light
+	XMFLOAT4 specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f); // Specular material properties (RGBA)
+	XMFLOAT4 specularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 0.5f); // Specular light colour (RGBA)
+	float specularPower = 1.0f; // Intensity of specular lights
+	XMFLOAT3 eyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f); // Position of Camera
 };
 
 struct ConstantBuffer

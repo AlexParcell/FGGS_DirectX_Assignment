@@ -42,21 +42,16 @@ struct VS_OUTPUT
 VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0 )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
-    output.Pos = mul( Pos, World );
+    output.Pos = mul(Pos, World);
 
 	output.PosW = output.Pos.xyz;
 
-	float3 toEye = normalize(EyePosW - output.PosW);
-	output.PosW = toEye;
-
-    output.Pos = mul( output.Pos, View );
+    output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
 
 	// Convert from local space to world space 
 	// W component of vector is 0 as vectors cannot be translated
-	float3 normalW = mul(float4(Normal, 0.0f), World).xyz;
-	normalW = normalize(normalW);
-	output.Normal = normalW;
+	output.Normal = mul(float4(Normal, 0.0f), World).xyz;
 
 	output.TexCoord = TexCoord;
 
@@ -73,7 +68,7 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
 	float3 Normal = normalize(input.Normal);
 
-	float3 toEye = input.PosW;
+	float3 toEye = normalize(EyePosW - input.PosW);
 
 	float3 reflection = reflect(mul(LightVecW, -1.0), Normal);
 
