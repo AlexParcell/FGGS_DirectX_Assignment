@@ -166,7 +166,7 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
 
     // Create window
     _hInst = hInstance;
-    RECT rc = {0, 0, 640, 480};
+    RECT rc = {0, 0, 1600, 900};
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
     _hWnd = CreateWindow(L"TutorialWindowClass", L"DX11 Framework", WS_OVERLAPPEDWINDOW,
                          CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
@@ -310,6 +310,7 @@ HRESULT Application::InitDevice()
 	InitShadersAndInputLayout();
 
 	MeshData cube = OBJLoader::Load("cube.obj", _pd3dDevice, false);
+	MeshData plane = OBJLoader::Load("Hercules.obj", _pd3dDevice);
 
 	for (int i = 0; i < GRID_SIZE; i++)
 	{
@@ -325,12 +326,13 @@ HRESULT Application::InitDevice()
 			temp->SetPosition(XMLoadFloat3(&Position));
 
 			// Add Child
-			GameObject* child = new GameObject(cube, this, L"Crate_COLOR.dds");
-			XMVECTOR position = XMVectorSet(3.0f, 0.0f, 0.0f, 0.0f);
+			GameObject* child = new GameObject(plane, this, L"Hercules_COLOR.dds");
+			XMVECTOR position = XMVectorSet(4.0f, 0.0f, 0.0f, 0.0f);
 			child->SetPosition(position);
-			XMVECTOR scale = XMVectorSet(0.5f, 0.5f, 0.5f, 0.0f);
+			XMVECTOR scale = XMVectorSet(0.1f, 0.1f, 0.1f, 0.0f);
 			child->SetScale(scale);
 
+			child->SetIsChild(true);
 			temp->SetChild(child);
 
 			cubes.push_back(temp);

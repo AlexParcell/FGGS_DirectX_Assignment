@@ -83,7 +83,7 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
 	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
 
-	Color.rgb = (ambient.rgb + diffuse.rgb) + textureColour.rgb + specular.rgb;
+	Color.rgb = textureColour.rgb * (ambient.rgb + diffuse.rgb + specular.rgb);
 	Color.a = DiffuseMtrl.a;
 
 	return Color;

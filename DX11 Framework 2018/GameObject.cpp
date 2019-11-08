@@ -17,10 +17,13 @@ GameObject::~GameObject()
 
 void GameObject::Update(XMMATRIX ParentWorld)
 {
-	XMFLOAT3 rot;
-	XMStoreFloat3(&rot, Rotation);
-	rot.y = app->GetTime();
-	Rotation = XMLoadFloat3(&rot);
+	if (!IsChild)
+	{
+		XMFLOAT3 rot;
+		XMStoreFloat3(&rot, Rotation);
+		rot.y = app->GetTime();
+		Rotation = XMLoadFloat3(&rot);
+	}
 
 	XMStoreFloat4x4(&world, XMMatrixScalingFromVector(Scale) * XMMatrixRotationRollPitchYawFromVector(Rotation) * XMMatrixTranslationFromVector(Position) * ParentWorld);
 

@@ -25,6 +25,8 @@ public:
 
 	Application* app;
 
+	bool IsChild = false;
+
 	XMVECTOR Position = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Scale = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
 	XMVECTOR Rotation = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
@@ -41,6 +43,7 @@ public:
 	void SetPixelShader(ID3D11PixelShader* ps) { pixelShader = ps; }
 
 	void SetChild(GameObject* child) { Child = child; }
+	void SetIsChild(bool val) { IsChild = val; }
 
 	XMVECTOR GetPosition() { return Position; }
 	void SetPosition(XMVECTOR pos) { Position = pos; }
