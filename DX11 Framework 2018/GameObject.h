@@ -19,22 +19,33 @@ public:
 	ID3D11VertexShader* vertexShader;
 	ID3D11PixelShader* pixelShader;
 
+	GameObject* Child = nullptr;
+
+	ID3D11ShaderResourceView* Texture = nullptr;
+
 	Application* app;
 
 	XMVECTOR Position = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Scale = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
 	XMVECTOR Rotation = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	
+
 public:
 
-	GameObject(MeshData _mesh, Application* _app);
+	GameObject(MeshData _mesh, Application* _app, wchar_t* textureName);
+	~GameObject();
 
 	void Draw();
-	void Update();
+	void Update(XMMATRIX WorldVector = XMMatrixIdentity());
 
 	void SetVertexShader(ID3D11VertexShader* vs) { vertexShader = vs; }
 	void SetPixelShader(ID3D11PixelShader* ps) { pixelShader = ps; }
 
+	void SetChild(GameObject* child) { Child = child; }
+
 	XMVECTOR GetPosition() { return Position; }
 	void SetPosition(XMVECTOR pos) { Position = pos; }
+	XMVECTOR GetScale() { return Scale; }
+	void SetScale(XMVECTOR scale) { Scale = scale; }
+	XMVECTOR GetRotation() { return Rotation; }
+	void SetRotation(XMVECTOR rotation) { Rotation = rotation; }
 };

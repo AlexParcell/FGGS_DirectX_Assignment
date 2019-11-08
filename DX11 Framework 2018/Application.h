@@ -43,7 +43,6 @@ private:
 	ID3D11Texture2D* _depthStencilBuffer = nullptr;
 	ID3D11RasterizerState* _wireFrame = nullptr;
 	ID3D11RasterizerState* _fillMode = nullptr;
-	ID3D11ShaderResourceView* _pTextureRV = nullptr;
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
 
 	Camera* cam = nullptr;
@@ -78,6 +77,7 @@ public:
 	ConstantBuffer* GetCurrentConstantBuffer() { return currentCB; }
 	ID3D11Buffer* GetConstantBuffer() { return _pConstantBuffer; }
 	ID3D11DeviceContext* GetImmediateContext() { return _pImmediateContext; }
+	ID3D11Device* GetDevice() {	return _pd3dDevice; }
 	float GetTime() { return _fTime; }
 };
 

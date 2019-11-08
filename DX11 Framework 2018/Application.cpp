@@ -128,10 +128,6 @@ HRESULT Application::InitShadersAndInputLayout()
     // Set the input layout
     _pImmediateContext->IASetInputLayout(_pVertexLayout);
 
-	// Create the texture
-	CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR.dds", nullptr, &_pTextureRV);
-	_pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
-
 	// Create the sample state
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
@@ -319,12 +315,24 @@ HRESULT Application::InitDevice()
 	{
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
-			GameObject* temp = new GameObject(cube, this);
+			GameObject* temp = new GameObject(cube, this, L"Crate_COLOR.dds");
+
+			// Set Position
 			XMFLOAT3 Position;
 			XMStoreFloat3(&Position, temp->GetPosition());
 			Position.x = i * 10;
 			Position.z = j * 10;
 			temp->SetPosition(XMLoadFloat3(&Position));
+
+			// Add Child
+			GameObject* child = new GameObject(cube, this, L"Crate_COLOR.dds");
+			XMVECTOR position = XMVectorSet(3.0f, 0.0f, 0.0f, 0.0f);
+			child->SetPosition(position);
+			XMVECTOR scale = XMVectorSet(0.5f, 0.5f, 0.5f, 0.0f);
+			child->SetScale(scale);
+
+			temp->SetChild(child);
+
 			cubes.push_back(temp);
 		}
 	}
