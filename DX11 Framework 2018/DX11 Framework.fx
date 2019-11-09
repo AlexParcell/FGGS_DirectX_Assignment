@@ -25,6 +25,7 @@ cbuffer ConstantBuffer : register( b0 )
 }
 
 Texture2D txDiffuse : register(t0);
+Texture2D txSpecular : register(t1);
 SamplerState samLinear : register(s0);
 
 //--------------------------------------------------------------------------------------
@@ -76,9 +77,11 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
 	float specularAmount = pow(max(dot(reflection, toEye), 0.0f), SpecularPower);
 
+	float4 specularColour = txSpecular.Sample(samLinear, input.TexCoord);
+
 	float4 ambient = (AmbientLight * AmbientMtrl);
 	float4 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight);
-	float4 specular = (specularAmount * (SpecularMtrl * SpecularLight));
+	float4 specular = (specularAmount * (specularColour * SpecularLight));
 
 	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
 

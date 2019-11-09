@@ -7,6 +7,7 @@ GameObject::GameObject(MeshData _mesh, Application* _app, wchar_t* textureName)
 	app = _app;
 	XMStoreFloat4x4(&world, XMMatrixIdentity());
 	CreateDDSTextureFromFile(app->GetDevice(), textureName, nullptr, &Texture);
+	CreateDDSTextureFromFile(app->GetDevice(), L"Cube_SPEC.dds", nullptr, &specMap);
 }
 
 GameObject::~GameObject()
@@ -41,6 +42,7 @@ void GameObject::Draw()
 	ID3D11DeviceContext* immediateContext = app->GetImmediateContext();
 
 	immediateContext->PSSetShaderResources(0, 1, &Texture);
+	immediateContext->PSSetShaderResources(1, 1, &specMap);
 
 	XMMATRIX _world = XMLoadFloat4x4(&world);
 	cb->mWorld = XMMatrixTranspose(_world);

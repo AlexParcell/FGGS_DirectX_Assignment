@@ -22,6 +22,7 @@ public:
 	GameObject* Child = nullptr;
 
 	ID3D11ShaderResourceView* Texture = nullptr;
+	ID3D11ShaderResourceView* specMap = nullptr;
 
 	Application* app;
 

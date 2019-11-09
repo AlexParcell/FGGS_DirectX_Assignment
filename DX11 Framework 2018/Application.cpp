@@ -328,16 +328,17 @@ HRESULT Application::InitDevice()
 			Position.x = i * 10;
 			Position.z = j * 10;
 			temp->SetPosition(XMLoadFloat3(&Position));
-
+			/*
 			// Add Child
 			GameObject* child = new GameObject(plane, this, L"Hercules_COLOR.dds");
 			XMVECTOR position = XMVectorSet(4.0f, 0.0f, 0.0f, 0.0f);
 			child->SetPosition(position);
 			XMVECTOR scale = XMVectorSet(0.1f, 0.1f, 0.1f, 0.0f);
 			child->SetScale(scale);
-
+			
 			child->SetIsChild(true);
 			temp->SetChild(child);
+			*/
 
 			cubes.push_back(temp);
 		}
