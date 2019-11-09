@@ -45,7 +45,11 @@ private:
 	ID3D11RasterizerState* _fillMode = nullptr;
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
 
-	Camera* cam = nullptr;
+	Camera* firstPersonCam = nullptr;
+	Camera* thirdPersonCam = nullptr;
+	Camera* pathCam = nullptr;
+	Camera* activeCam = nullptr;
+
 	LightingData* light = nullptr;
 	ConstantBuffer* currentCB;
 
@@ -79,5 +83,7 @@ public:
 	ID3D11DeviceContext* GetImmediateContext() { return _pImmediateContext; }
 	ID3D11Device* GetDevice() {	return _pd3dDevice; }
 	float GetTime() { return _fTime; }
+
+	XMFLOAT4X4* GetViewMatrix() { return &_view; }
 };
 

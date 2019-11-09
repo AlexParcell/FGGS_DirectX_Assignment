@@ -54,10 +54,14 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
         return E_FAIL;
     }
 
-	cam = new Camera(this);
+	firstPersonCam = new Camera(this);
+	activeCam = firstPersonCam;
+
+	thirdPersonCam = new Camera(this, CT_ThirdPerson);
+	pathCam = new Camera(this, CT_Path, PT_Linear);
 
     // Initialize the view matrix
-	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->GetEye(), cam->GetDirection(), cam->GetUp()));
+	XMStoreFloat4x4(&_view, activeCam->GetViewMatrix());
 
     // Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT) _WindowHeight, 0.01f, 100.0f));
@@ -385,7 +389,9 @@ void Application::Cleanup()
 	{
 		delete cubes[i];
 	}
-	delete cam;
+	delete firstPersonCam;
+	delete thirdPersonCam;
+	delete pathCam;
 	
     if (_pImmediateContext) _pImmediateContext->ClearState();
 
@@ -411,14 +417,7 @@ void Application::Update()
 
     if (_driverType == D3D_DRIVER_TYPE_REFERENCE)
     {
-		if (Reverse)
-		{
-			t -= (float)XM_PI * 0.0125f;
-		}
-		else
-		{
-			t += (float)XM_PI * 0.0125f;
-		}
+		t += (float)XM_PI * 0.0125f;
     }
     else
     {
@@ -429,21 +428,7 @@ void Application::Update()
             dwTimeStart = dwTimeCur;
 
         t = (dwTimeCur - dwTimeStart) / 1000.0f;
-
-		if (Reverse)
-		{
-			t -= t * 2;
-		}
     }
-
-	/*if (GetAsyncKeyState(VK_DOWN))
-	{
-		Reverse = true;
-	}
-	else
-	{
-		Reverse = false;
-	}*/
 
     //
     // Animate the cube
@@ -467,12 +452,26 @@ void Application::Update()
 		Wireframe = !Wireframe;
 	}*/
 
-	cam->Update();
+	if (GetAsyncKeyState(0x31)) // 1
+	{
+		activeCam = firstPersonCam;
+	}
 
-	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(cam->GetEye(), cam->GetDirection(), cam->GetUp()));
+	if (GetAsyncKeyState(0x32)) // 2
+	{
+		activeCam = thirdPersonCam;
+	}
+
+	if (GetAsyncKeyState(0x33)) // 3
+	{
+		activeCam = pathCam;
+	}
+
+	activeCam->Update();
+	XMStoreFloat4x4(&_view, activeCam->GetViewMatrix());
 
 	_fTime = t;
-	XMStoreFloat3(&light->eyePosW, cam->GetDirection());
+	XMStoreFloat3(&light->eyePosW, activeCam->GetDirection());
 }
 
 void Application::Draw()
