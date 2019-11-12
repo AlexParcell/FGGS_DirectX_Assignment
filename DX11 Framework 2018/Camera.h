@@ -27,64 +27,68 @@ enum PathType
 
 class Camera
 {
-	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -30.0f, 0.0f);
-	XMVECTOR direction = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR right = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR forward = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR target = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMFLOAT3 _eye = XMFLOAT3(0.0f, 0.0f, -30.0f);
+	XMFLOAT3 _direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	XMFLOAT3 _up = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	XMFLOAT3 _right = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	XMFLOAT3 _forward = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	XMFLOAT3 _target = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
-	float CameraSensitivity = 0.05f;
+	float _cameraSensitivity = 0.05f;
 
-	Application* app;
+	Application* _app;
 
-	float InterpTime = 0.0f;
+	float _interpTime = 0.0f;
 
-	CameraType camType = CT_FirstPerson;
-	PathType pathType = PT_Linear;
+	CameraType _camType = CT_FirstPerson;
+	PathType _pathType = PT_Linear;
 
-	XMMATRIX ViewMatrix = XMMatrixLookAtLH(eye, direction, up);
+	XMFLOAT4X4 _viewMatrix;
+	XMFLOAT4X4 _projectionMatrix;
 
-	bool Active = true;
+	FLOAT _windowWidth;
+	FLOAT _windowHeight;
+	FLOAT _nearDepth;
+	FLOAT _farDepth;
+
+	bool _active = true;
 
 	void SetViewMatrix(); // done internally, not a setter
+	void UpdateVectors();
 
 public:
-	Camera(Application* _app)
+	Camera(Application* app)
 	{
-		app = _app;
+		_app = app;
 		SetViewMatrix();
 	}
 
-	Camera(Application* _app, CameraType _camType)
+	Camera(Application* app, CameraType camType)
 	{
-		app = _app;
-		camType = _camType;
+		_app = app;
+		_camType = camType;
 		SetViewMatrix();
 	}
 
-	Camera(Application* _app, CameraType _camType, PathType _pathType)
-	{
-		app = _app;
-		camType = _camType;
-		pathType = _pathType;
-		SetViewMatrix();
-	}
+	Camera(Application* app, CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 
 	void Update();
 	void FirstPersonUpdate();
 	void ThirdPersonUpdate();
 	void PathUpdate();
+	void Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 
-	XMMATRIX GetViewMatrix() { return ViewMatrix; }
+	XMFLOAT4X4 GetViewMatrix() { return _viewMatrix; }
+	XMFLOAT4X4 GetProjectionMatrix() { return _projectionMatrix; }
+	XMFLOAT4X4 GetViewProjectionMatrix();
 
-	XMVECTOR GetEye() { return eye; }
-	XMVECTOR GetDirection() { return direction; }
-	XMVECTOR GetUp() { return up; }
-	XMVECTOR GetRight() { return right; }
-	XMVECTOR GetForward() { return forward; }
+	XMFLOAT3 GetEye() { return _eye; }
+	XMFLOAT3 GetDirection() { return _direction; }
+	XMFLOAT3 GetUp() { return _up; }
+	XMFLOAT3 GetRight() { return _right; }
+	XMFLOAT3 GetForward() { return _forward; }
 
-	void SetTargetVector(XMVECTOR Target) { target = Target; }
-	void SetCameraType(CameraType type) { camType = type; }
-	void SetPathType(PathType type) { pathType = type; }
+	void SetTargetVector(XMFLOAT3 Target) { _target = Target; }
+	void SetCameraType(CameraType type) { _camType = type; }
+	void SetPathType(PathType type) { _pathType = type; }
 };

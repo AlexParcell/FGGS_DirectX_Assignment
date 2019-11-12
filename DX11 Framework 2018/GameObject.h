@@ -24,13 +24,15 @@ public:
 	ID3D11ShaderResourceView* Texture = nullptr;
 	ID3D11ShaderResourceView* specMap = nullptr;
 
+	bool HasSpecular = false;
+
 	Application* app;
 
 	bool IsChild = false;
 
-	XMVECTOR Position = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR Scale = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
-	XMVECTOR Rotation = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 Scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	XMFLOAT3 Rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 public:
 
@@ -45,11 +47,12 @@ public:
 
 	void SetChild(GameObject* child) { Child = child; }
 	void SetIsChild(bool val) { IsChild = val; }
+	void SetHasSpec(bool value) { HasSpecular = value; }
 
-	XMVECTOR GetPosition() { return Position; }
-	void SetPosition(XMVECTOR pos) { Position = pos; }
-	XMVECTOR GetScale() { return Scale; }
-	void SetScale(XMVECTOR scale) { Scale = scale; }
-	XMVECTOR GetRotation() { return Rotation; }
-	void SetRotation(XMVECTOR rotation) { Rotation = rotation; }
+	XMFLOAT3 GetPosition() { return Position; }
+	void SetPosition(XMFLOAT3 pos) { Position = pos; }
+	XMFLOAT3 GetScale() { return Scale; }
+	void SetScale(XMFLOAT3 scale) { Scale = scale; }
+	XMFLOAT3 GetRotation() { return Rotation; }
+	void SetRotation(XMFLOAT3 rotation) { Rotation = rotation; }
 };

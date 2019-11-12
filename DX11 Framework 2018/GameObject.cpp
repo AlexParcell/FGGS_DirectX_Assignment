@@ -7,7 +7,8 @@ GameObject::GameObject(MeshData _mesh, Application* _app, wchar_t* textureName)
 	app = _app;
 	XMStoreFloat4x4(&world, XMMatrixIdentity());
 	CreateDDSTextureFromFile(app->GetDevice(), textureName, nullptr, &Texture);
-	CreateDDSTextureFromFile(app->GetDevice(), L"Cube_SPEC.dds", nullptr, &specMap);
+	if (HasSpecular)
+		CreateDDSTextureFromFile(app->GetDevice(), L"Cube_SPEC.dds", nullptr, &specMap);
 }
 
 GameObject::~GameObject()
@@ -20,13 +21,13 @@ void GameObject::Update(XMMATRIX ParentWorld)
 {
 	if (!IsChild)
 	{
-		XMFLOAT3 rot;
-		XMStoreFloat3(&rot, Rotation);
-		rot.y = app->GetTime();
-		Rotation = XMLoadFloat3(&rot);
+		Rotation.y = app->GetTime();
 	}
 
-	XMStoreFloat4x4(&world, XMMatrixScalingFromVector(Scale) * XMMatrixRotationRollPitchYawFromVector(Rotation) * XMMatrixTranslationFromVector(Position) * ParentWorld);
+	XMVECTOR scale = XMLoadFloat3(&Scale);
+	XMVECTOR pos = XMLoadFloat3(&Position);
+	XMVECTOR rot = XMLoadFloat3(&Rotation);
+	XMStoreFloat4x4(&world, XMMatrixScalingFromVector(scale) * XMMatrixRotationRollPitchYawFromVector(rot) * XMMatrixTranslationFromVector(pos) * ParentWorld);
 
 	if (Child != nullptr)
 	{
@@ -42,10 +43,12 @@ void GameObject::Draw()
 	ID3D11DeviceContext* immediateContext = app->GetImmediateContext();
 
 	immediateContext->PSSetShaderResources(0, 1, &Texture);
-	immediateContext->PSSetShaderResources(1, 1, &specMap);
+	if (HasSpecular)
+		immediateContext->PSSetShaderResources(1, 1, &specMap);
 
 	XMMATRIX _world = XMLoadFloat4x4(&world);
 	cb->mWorld = XMMatrixTranspose(_world);
+	cb->HasSpecular = HasSpecular;
 	immediateContext->UpdateSubresource(constantBuffer, 0, nullptr, cb, 0, 0);
 
 	immediateContext->VSSetShader(vertexShader, nullptr, 0);

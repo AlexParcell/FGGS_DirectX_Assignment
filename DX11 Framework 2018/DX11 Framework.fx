@@ -22,6 +22,7 @@ cbuffer ConstantBuffer : register( b0 )
 	float4 SpecularLight;
 	float SpecularPower;
 	float3 EyePosW;
+	bool HasSpecular;
 }
 
 Texture2D txDiffuse : register(t0);
@@ -81,7 +82,16 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
 	float4 ambient = (AmbientLight * AmbientMtrl);
 	float4 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight);
-	float4 specular = (specularAmount * (specularColour * SpecularLight));
+
+	float4 specular;
+	if (HasSpecular)
+	{
+		specular = (specularAmount * (specularColour * SpecularLight));
+	}
+	else
+	{
+		specular = (specularAmount * (SpecularMtrl * SpecularLight));
+	}
 
 	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
 

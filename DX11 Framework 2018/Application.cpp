@@ -54,17 +54,17 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
         return E_FAIL;
     }
 
-	firstPersonCam = new Camera(this);
+	firstPersonCam = new Camera(this, CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
 	activeCam = firstPersonCam;
 
-	thirdPersonCam = new Camera(this, CT_ThirdPerson);
-	pathCam = new Camera(this, CT_Path, PT_Linear);
+	thirdPersonCam = new Camera(this, CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	pathCam = new Camera(this, CT_Path, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
 
     // Initialize the view matrix
-	XMStoreFloat4x4(&_view, activeCam->GetViewMatrix());
+	_view = activeCam->GetViewMatrix();
 
     // Initialize the projection matrix
-	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT) _WindowHeight, 0.01f, 100.0f));
+	_projection = activeCam->GetProjectionMatrix();
 
 	return S_OK;
 }
@@ -323,22 +323,18 @@ HRESULT Application::InitDevice()
 			GameObject* temp = new GameObject(cube, this, L"Crate_COLOR.dds");
 
 			// Set Position
-			XMFLOAT3 Position;
-			XMStoreFloat3(&Position, temp->GetPosition());
-			Position.x = i * 10;
-			Position.z = j * 10;
-			temp->SetPosition(XMLoadFloat3(&Position));
-			/*
+			temp->SetPosition(XMFLOAT3(i * 10, 0.0f, j * 10));
+			temp->SetHasSpec(true);
+			
+
 			// Add Child
 			GameObject* child = new GameObject(plane, this, L"Hercules_COLOR.dds");
-			XMVECTOR position = XMVectorSet(4.0f, 0.0f, 0.0f, 0.0f);
-			child->SetPosition(position);
-			XMVECTOR scale = XMVectorSet(0.1f, 0.1f, 0.1f, 0.0f);
-			child->SetScale(scale);
+			child->SetPosition(XMFLOAT3(4.0f, 0.0f, 0.0f));
+			child->SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
 			
 			child->SetIsChild(true);
 			temp->SetChild(child);
-			*/
+			
 
 			cubes.push_back(temp);
 		}
@@ -469,10 +465,10 @@ void Application::Update()
 	}
 
 	activeCam->Update();
-	XMStoreFloat4x4(&_view, activeCam->GetViewMatrix());
+	_view = activeCam->GetViewMatrix();
 
 	_fTime = t;
-	XMStoreFloat3(&light->eyePosW, activeCam->GetDirection());
+	light->eyePosW = activeCam->GetDirection();
 }
 
 void Application::Draw()
