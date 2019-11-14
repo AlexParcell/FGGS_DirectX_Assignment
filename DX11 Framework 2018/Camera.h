@@ -27,8 +27,6 @@ enum PathType
 
 class Camera
 {
-	Application* _app;
-
 	XMFLOAT3 _eye = XMFLOAT3(0.0f, 0.0f, -30.0f);
 	XMFLOAT3 _direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	XMFLOAT3 _up = XMFLOAT3(0.0f, 1.0f, 0.0f);
@@ -53,20 +51,7 @@ class Camera
 	void UpdateVectors();
 
 public:
-	Camera(Application* app)
-	{
-		_app = app;
-		SetViewMatrix();
-	}
-
-	Camera(Application* app, CameraType camType)
-	{
-		_app = app;
-		_camType = camType;
-		SetViewMatrix();
-	}
-
-	Camera(Application* app, CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
+	Camera(CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 
 	void Update();
 	void FirstPersonUpdate();

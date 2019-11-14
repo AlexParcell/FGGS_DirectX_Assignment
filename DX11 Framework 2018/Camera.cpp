@@ -1,9 +1,8 @@
 #include "Camera.h"
 #include "Application.h"
 
-Camera::Camera(Application* app, CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
+Camera::Camera(CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
 {
-	_app = app;
 	_camType = camType;
 	_pathType = pathType;
 	_windowWidth = windowWidth;

@@ -55,11 +55,11 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
     }
 
 	// Set up cameras
-	_pFirstPersonCam = new Camera(this, CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pFirstPersonCam = new Camera(CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
 	_pActiveCam = _pFirstPersonCam;
 	
-	_pThirdPersonCam = new Camera(this, CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
-	_pPathCam = new Camera(this, CT_Path, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pThirdPersonCam = new Camera(CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pPathCam = new Camera(CT_Path, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
 
     // Initialize the view matrix
 	_view = _pActiveCam->GetViewMatrix();
