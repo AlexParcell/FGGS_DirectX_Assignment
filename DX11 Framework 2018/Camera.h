@@ -27,31 +27,27 @@ enum PathType
 
 class Camera
 {
+	Application* _app;
+
 	XMFLOAT3 _eye = XMFLOAT3(0.0f, 0.0f, -30.0f);
 	XMFLOAT3 _direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	XMFLOAT3 _up = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	XMFLOAT3 _right = XMFLOAT3(0.0f, 0.0f, 1.0f);
 	XMFLOAT3 _forward = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	XMFLOAT3 _target = XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-	float _cameraSensitivity = 0.05f;
-
-	Application* _app;
-
-	float _interpTime = 0.0f;
-
-	CameraType _camType = CT_FirstPerson;
-	PathType _pathType = PT_Linear;
-
 	XMFLOAT4X4 _viewMatrix;
 	XMFLOAT4X4 _projectionMatrix;
-
 	FLOAT _windowWidth;
 	FLOAT _windowHeight;
 	FLOAT _nearDepth;
 	FLOAT _farDepth;
 
-	bool _active = true;
+	CameraType _camType = CT_FirstPerson;
+	PathType _pathType = PT_Linear;
+
+	float _fCameraSensitivity = 0.05f;
+	float _fInterpTime = 0.0f;
+	bool _bActive = true;
 
 	void SetViewMatrix(); // done internally, not a setter
 	void UpdateVectors();

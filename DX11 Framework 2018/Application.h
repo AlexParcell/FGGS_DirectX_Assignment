@@ -29,6 +29,9 @@ private:
 	HWND                    _hWnd = nullptr;
 	D3D_DRIVER_TYPE         _driverType = D3D_DRIVER_TYPE_NULL;
 	D3D_FEATURE_LEVEL       _featureLevel = D3D_FEATURE_LEVEL_11_0;
+	XMFLOAT4X4              _view;
+	XMFLOAT4X4              _projection;
+
 	ID3D11Device*           _pd3dDevice = nullptr;
 	ID3D11DeviceContext*    _pImmediateContext = nullptr;
 	IDXGISwapChain*         _pSwapChain = nullptr;
@@ -37,26 +40,23 @@ private:
 	ID3D11PixelShader*      _pPixelShader = nullptr;
 	ID3D11InputLayout*      _pVertexLayout = nullptr;
 	ID3D11Buffer*           _pConstantBuffer = nullptr;
-	XMFLOAT4X4              _view;
-	XMFLOAT4X4              _projection;
-	ID3D11DepthStencilView* _depthStencilView = nullptr;
-	ID3D11Texture2D* _depthStencilBuffer = nullptr;
-	ID3D11RasterizerState* _wireFrame = nullptr;
-	ID3D11RasterizerState* _fillMode = nullptr;
-	ID3D11SamplerState* _pSamplerLinear = nullptr;
+	ID3D11DepthStencilView* _pDepthStencilView = nullptr;
+	ID3D11Texture2D*		_pDepthStencilBuffer = nullptr;
+	ID3D11RasterizerState*	_pWireFrame = nullptr;
+	ID3D11RasterizerState*	_pFillMode = nullptr;
+	ID3D11SamplerState*		_pSamplerLinear = nullptr;
 
-	Camera* firstPersonCam = nullptr;
-	Camera* thirdPersonCam = nullptr;
-	Camera* pathCam = nullptr;
-	Camera* activeCam = nullptr;
+	Camera* _pFirstPersonCam = nullptr;
+	Camera* _pThirdPersonCam = nullptr;
+	Camera* _pPathCam = nullptr;
+	Camera* _pActiveCam = nullptr;
 
-	LightingData* light = nullptr;
-	ConstantBuffer* currentCB;
+	LightingData* _pLight = nullptr;
+	ConstantBuffer* _pCurrentCB;
 
-	vector<GameObject*> cubes;
+	vector<GameObject*> _pCubes;
 
-	bool Reverse = false;
-	bool Wireframe = false;
+	bool _bWireframe = false;
 	float _fTime = 0.0f;
 
 private:
@@ -78,7 +78,7 @@ public:
 	void Update();
 	void Draw();
 
-	ConstantBuffer* GetCurrentConstantBuffer() { return currentCB; }
+	ConstantBuffer* GetCurrentConstantBuffer() { return _pCurrentCB; }
 	ID3D11Buffer* GetConstantBuffer() { return _pConstantBuffer; }
 	ID3D11DeviceContext* GetImmediateContext() { return _pImmediateContext; }
 	ID3D11Device* GetDevice() {	return _pd3dDevice; }

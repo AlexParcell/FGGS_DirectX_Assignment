@@ -25,7 +25,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 Application::Application()
 {
-	light = new LightingData();
+	_pLight = new LightingData();
 }
 
 Application::~Application()
@@ -54,17 +54,18 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
         return E_FAIL;
     }
 
-	firstPersonCam = new Camera(this, CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
-	activeCam = firstPersonCam;
-
-	thirdPersonCam = new Camera(this, CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
-	pathCam = new Camera(this, CT_Path, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	// Set up cameras
+	_pFirstPersonCam = new Camera(this, CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pActiveCam = _pFirstPersonCam;
+	
+	_pThirdPersonCam = new Camera(this, CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pPathCam = new Camera(this, CT_Path, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
 
     // Initialize the view matrix
-	_view = activeCam->GetViewMatrix();
+	_view = _pActiveCam->GetViewMatrix();
 
     // Initialize the projection matrix
-	_projection = activeCam->GetProjectionMatrix();
+	_projection = _pActiveCam->GetProjectionMatrix();
 
 	return S_OK;
 }
@@ -296,10 +297,10 @@ HRESULT Application::InitDevice()
 	depthStencilDesc.CPUAccessFlags = 0;
 	depthStencilDesc.MiscFlags = 0;
 
-	_pd3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, &_depthStencilBuffer);
-	_pd3dDevice->CreateDepthStencilView(_depthStencilBuffer, nullptr, &_depthStencilView);
+	_pd3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, &_pDepthStencilBuffer);
+	_pd3dDevice->CreateDepthStencilView(_pDepthStencilBuffer, nullptr, &_pDepthStencilView);
 
-    _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _depthStencilView);
+    _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
 
     // Setup the viewport
     D3D11_VIEWPORT vp;
@@ -324,9 +325,8 @@ HRESULT Application::InitDevice()
 
 			// Set Position
 			temp->SetPosition(XMFLOAT3(i * 10, 0.0f, j * 10));
-			temp->SetHasSpec(true);
+			temp->SetSpecularMap(L"Cube_SPEC.dds");
 			
-
 			// Add Child
 			GameObject* child = new GameObject(plane, this, L"Hercules_COLOR.dds");
 			child->SetPosition(XMFLOAT3(4.0f, 0.0f, 0.0f));
@@ -336,7 +336,7 @@ HRESULT Application::InitDevice()
 			temp->SetChild(child);
 			
 
-			cubes.push_back(temp);
+			_pCubes.push_back(temp);
 		}
 	}
 
@@ -360,7 +360,7 @@ HRESULT Application::InitDevice()
 	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
 	wfdesc.FillMode = D3D11_FILL_WIREFRAME;
 	wfdesc.CullMode = D3D11_CULL_NONE;
-	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_wireFrame);
+	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_pWireFrame);
 
 	if (FAILED(hr))
 		return hr;
@@ -370,32 +370,32 @@ HRESULT Application::InitDevice()
 	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
 	wfdesc.FillMode = D3D11_FILL_SOLID;
 	wfdesc.CullMode = D3D11_CULL_BACK;
-	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_fillMode);
+	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_pFillMode);
 
 	if (FAILED(hr))
 		return hr;
 
-	_pImmediateContext->RSSetState(_fillMode);
+	_pImmediateContext->RSSetState(_pFillMode);
 
     return S_OK;
 }
 
 void Application::Cleanup()
 {
-	for (int i = 0; i < cubes.size(); i++)
+	for (int i = 0; i < _pCubes.size(); i++)
 	{
-		delete cubes[i];
+		delete _pCubes[i];
 	}
-	delete firstPersonCam;
-	delete thirdPersonCam;
-	delete pathCam;
+	delete _pFirstPersonCam;
+	delete _pThirdPersonCam;
+	delete _pPathCam;
 	
     if (_pImmediateContext) _pImmediateContext->ClearState();
 
-	if (_depthStencilView) _depthStencilView->Release();
-	if (_depthStencilBuffer) _depthStencilBuffer->Release();
-	if (_wireFrame) _wireFrame->Release();
-	if (_fillMode) _fillMode->Release();
+	if (_pDepthStencilView) _pDepthStencilView->Release();
+	if (_pDepthStencilBuffer) _pDepthStencilBuffer->Release();
+	if (_pWireFrame) _pWireFrame->Release();
+	if (_pFillMode) _pFillMode->Release();
 
     if (_pConstantBuffer) _pConstantBuffer->Release();
     if (_pVertexLayout) _pVertexLayout->Release();
@@ -431,9 +431,9 @@ void Application::Update()
     // Animate the cube
     //
 
-	for (int i = 0; i < cubes.size(); i++)
+	for (int i = 0; i < _pCubes.size(); i++)
 	{
-		cubes[i]->Update();
+		_pCubes[i]->Update();
 	}
 
 	/*if (GetAsyncKeyState(VK_UP))
@@ -451,24 +451,24 @@ void Application::Update()
 
 	if (GetAsyncKeyState(0x31)) // 1
 	{
-		activeCam = firstPersonCam;
+		_pActiveCam = _pFirstPersonCam;
 	}
 
 	if (GetAsyncKeyState(0x32)) // 2
 	{
-		activeCam = thirdPersonCam;
+		_pActiveCam = _pThirdPersonCam;
 	}
 
 	if (GetAsyncKeyState(0x33)) // 3
 	{
-		activeCam = pathCam;
+		_pActiveCam = _pPathCam;
 	}
 
-	activeCam->Update();
-	_view = activeCam->GetViewMatrix();
+	_pActiveCam->Update();
+	_view = _pActiveCam->GetViewMatrix();
 
 	_fTime = t;
-	light->eyePosW = activeCam->GetDirection();
+	_pLight->eyePosW = _pActiveCam->GetDirection();
 }
 
 void Application::Draw()
@@ -476,7 +476,7 @@ void Application::Draw()
     // Clear the back buffer
     float ClearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f}; // red,green,blue,alpha
     _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, ClearColor);
-	_pImmediateContext->ClearDepthStencilView(_depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	_pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	XMMATRIX view = XMLoadFloat4x4(&_view);
 	XMMATRIX projection = XMLoadFloat4x4(&_projection);
@@ -486,27 +486,27 @@ void Application::Draw()
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
 	cb.gTime = _fTime;
-	cb.lightDirection = light->lightDirection;
-	cb.diffuseMaterial = light->diffuseMaterial;
-	cb.diffuseLight = light->diffuseLight;
-	cb.ambientMaterial = light->ambientMaterial;
-	cb.ambientLight = light->ambientLight;
-	cb.specularMaterial = light->specularMaterial;
-	cb.specularLight = light->specularLight;
-	cb.specularPower = light->specularPower;
-	cb.eyePosW = light->eyePosW;
+	cb.lightDirection = _pLight->lightDirection;
+	cb.diffuseMaterial = _pLight->diffuseMaterial;
+	cb.diffuseLight = _pLight->diffuseLight;
+	cb.ambientMaterial = _pLight->ambientMaterial;
+	cb.ambientLight = _pLight->ambientLight;
+	cb.specularMaterial = _pLight->specularMaterial;
+	cb.specularLight = _pLight->specularLight;
+	cb.specularPower = _pLight->specularPower;
+	cb.eyePosW = _pLight->eyePosW;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-	currentCB = &cb;
+	_pCurrentCB = &cb;
 
     // Render objects
 
-	for (int i = 0; i < cubes.size(); i++)
+	for (int i = 0; i < _pCubes.size(); i++)
 	{
-		cubes[i]->SetPixelShader(_pPixelShader);
-		cubes[i]->SetVertexShader(_pVertexShader);
-		cubes[i]->Draw();
+		_pCubes[i]->SetPixelShader(_pPixelShader);
+		_pCubes[i]->SetVertexShader(_pVertexShader);
+		_pCubes[i]->Draw();
 	}
 
     // Present our back buffer to our front buffer

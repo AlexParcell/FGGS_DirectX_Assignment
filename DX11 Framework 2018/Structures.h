@@ -43,5 +43,5 @@ struct ConstantBuffer
 	XMFLOAT4 specularLight;
 	float specularPower;
 	XMFLOAT3 eyePosW;
-	bool HasSpecular;
+	bool hasSpecular;
 };

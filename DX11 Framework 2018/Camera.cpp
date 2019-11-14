@@ -41,6 +41,7 @@ void Camera::Update()
 	SetViewMatrix();
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 void Camera::FirstPersonUpdate()
 {
 	XMVECTOR up = XMLoadFloat3(&_up);
@@ -49,66 +50,66 @@ void Camera::FirstPersonUpdate()
 	XMVECTOR right = XMLoadFloat3(&_right);
 	XMVECTOR forward = XMLoadFloat3(&_forward);
 
-	if (GetAsyncKeyState(0x57)) // W, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	if (GetAsyncKeyState(0x57)) // W
 	{
-		XMVECTOR increment = up * _cameraSensitivity;
+		XMVECTOR increment = up * _fCameraSensitivity;
 		eye += increment;
 		direction += increment;
 	}
 
-	if (GetAsyncKeyState(0x53)) // S, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	if (GetAsyncKeyState(0x53)) // S
 	{
-		XMVECTOR increment = up * _cameraSensitivity;
+		XMVECTOR increment = up * _fCameraSensitivity;
 		eye -= increment;
 		direction -= increment;
 	}
 
-	if (GetAsyncKeyState(0x41)) // A, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	if (GetAsyncKeyState(0x41)) // A
 	{
-		XMVECTOR increment = right * _cameraSensitivity;
+		XMVECTOR increment = right * _fCameraSensitivity;
 		eye -= increment;
 		direction -= increment;
 	}
 
-	if (GetAsyncKeyState(0x44)) // D, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	if (GetAsyncKeyState(0x44)) // D
 	{
-		XMVECTOR increment = right * _cameraSensitivity;
+		XMVECTOR increment = right * _fCameraSensitivity;
 		eye += increment;
 		direction += increment;
 	}
 
-	if (GetAsyncKeyState(0x50)) // P, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	if (GetAsyncKeyState(0x50)) // P
 	{
-		XMVECTOR increment = forward * _cameraSensitivity;
+		XMVECTOR increment = forward * _fCameraSensitivity;
 		eye += increment;
 		direction += increment;
 	}
 
-	if (GetAsyncKeyState(0x4F)) // O, https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	if (GetAsyncKeyState(0x4F)) // O
 	{
-		XMVECTOR increment = forward * _cameraSensitivity;
+		XMVECTOR increment = forward * _fCameraSensitivity;
 		eye -= increment;
 		direction -= increment;
 	}
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		direction += (up * _cameraSensitivity);
+		direction += (up * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		direction -= (up * _cameraSensitivity);
+		direction -= (up * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))
 	{
-		direction -= (right * _cameraSensitivity);
+		direction -= (right * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_RIGHT))
 	{
-		direction += (right * _cameraSensitivity);
+		direction += (right * _fCameraSensitivity);
 	}
 
 	XMStoreFloat3(&_up, up);
@@ -126,22 +127,22 @@ void Camera::ThirdPersonUpdate()
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		eye += (forward * _cameraSensitivity);
+		eye += (forward * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		eye -= (forward * _cameraSensitivity);
+		eye -= (forward * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))
 	{
-		eye -= (right * _cameraSensitivity);
+		eye -= (right * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_RIGHT))
 	{
-		eye += (right * _cameraSensitivity);
+		eye += (right * _fCameraSensitivity);
 	}
 
 	XMStoreFloat3(&_eye, eye);

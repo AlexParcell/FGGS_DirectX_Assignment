@@ -1,70 +1,75 @@
 #include "GameObject.h"
 #include "Application.h"
 
-GameObject::GameObject(MeshData _mesh, Application* _app, wchar_t* textureName)
+GameObject::GameObject(MeshData mesh, Application* app, wchar_t* textureName)
 {
-	mesh = _mesh;
-	app = _app;
-	XMStoreFloat4x4(&world, XMMatrixIdentity());
-	CreateDDSTextureFromFile(app->GetDevice(), textureName, nullptr, &Texture);
-	if (HasSpecular)
-		CreateDDSTextureFromFile(app->GetDevice(), L"Cube_SPEC.dds", nullptr, &specMap);
+	_mesh = mesh;
+	_pApp = app;
+	XMStoreFloat4x4(&_world, XMMatrixIdentity());
+	CreateDDSTextureFromFile(_pApp->GetDevice(), textureName, nullptr, &_pTexture);
 }
 
 GameObject::~GameObject()
 {
-	Texture->Release();
-	delete Child;
+	_pTexture->Release();
+	if (_pSpecMap != nullptr)
+		_pSpecMap->Release();
+	delete _pChild;
+}
+
+void GameObject::SetSpecularMap(wchar_t* specMapName)
+{
+	CreateDDSTextureFromFile(_pApp->GetDevice(), specMapName, nullptr, &_pSpecMap);
 }
 
 void GameObject::Update(XMMATRIX ParentWorld)
 {
-	if (!IsChild)
+	if (!_bIsChild)
 	{
-		Rotation.y = app->GetTime();
+		_rotation.y = _pApp->GetTime();
 	}
 
-	XMVECTOR scale = XMLoadFloat3(&Scale);
-	XMVECTOR pos = XMLoadFloat3(&Position);
-	XMVECTOR rot = XMLoadFloat3(&Rotation);
-	XMStoreFloat4x4(&world, XMMatrixScalingFromVector(scale) * XMMatrixRotationRollPitchYawFromVector(rot) * XMMatrixTranslationFromVector(pos) * ParentWorld);
+	XMVECTOR scale = XMLoadFloat3(&_scale);
+	XMVECTOR pos = XMLoadFloat3(&_position);
+	XMVECTOR rot = XMLoadFloat3(&_rotation);
+	XMStoreFloat4x4(&_world, XMMatrixScalingFromVector(scale) * XMMatrixRotationRollPitchYawFromVector(rot) * XMMatrixTranslationFromVector(pos) * ParentWorld);
 
-	if (Child != nullptr)
+	if (_pChild != nullptr)
 	{
-		XMMATRIX _world = XMLoadFloat4x4(&world);
-		Child->Update(_world);
+		XMMATRIX world = XMLoadFloat4x4(&_world);
+		_pChild->Update(world);
 	}
 }
 
 void GameObject::Draw()
 {
-	ConstantBuffer* cb = app->GetCurrentConstantBuffer();
-	ID3D11Buffer* constantBuffer = app->GetConstantBuffer();
-	ID3D11DeviceContext* immediateContext = app->GetImmediateContext();
+	ConstantBuffer* cb = _pApp->GetCurrentConstantBuffer();
+	ID3D11Buffer* constantBuffer = _pApp->GetConstantBuffer();
+	ID3D11DeviceContext* immediateContext = _pApp->GetImmediateContext();
 
-	immediateContext->PSSetShaderResources(0, 1, &Texture);
-	if (HasSpecular)
-		immediateContext->PSSetShaderResources(1, 1, &specMap);
+	immediateContext->PSSetShaderResources(0, 1, &_pTexture);
+	if (_bHasSpecular)
+		immediateContext->PSSetShaderResources(1, 1, &_pSpecMap);
 
-	XMMATRIX _world = XMLoadFloat4x4(&world);
-	cb->mWorld = XMMatrixTranspose(_world);
-	cb->HasSpecular = HasSpecular;
+	XMMATRIX world = XMLoadFloat4x4(&_world);
+	cb->mWorld = XMMatrixTranspose(world);
+	cb->hasSpecular = _bHasSpecular;
 	immediateContext->UpdateSubresource(constantBuffer, 0, nullptr, cb, 0, 0);
 
-	immediateContext->VSSetShader(vertexShader, nullptr, 0);
+	immediateContext->VSSetShader(_pVertexShader, nullptr, 0);
 	immediateContext->VSSetConstantBuffers(0, 1, &constantBuffer);
 	immediateContext->PSSetConstantBuffers(0, 1, &constantBuffer);
-	immediateContext->PSSetShader(pixelShader, nullptr, 0);
+	immediateContext->PSSetShader(_pPixelShader, nullptr, 0);
 
-	immediateContext->IASetVertexBuffers(0, 1, &mesh.VertexBuffer, &mesh.VBStride, &mesh.VBOffset);
-	immediateContext->IASetIndexBuffer(mesh.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	immediateContext->IASetVertexBuffers(0, 1, &_mesh.VertexBuffer, &_mesh.VBStride, &_mesh.VBOffset);
+	immediateContext->IASetIndexBuffer(_mesh.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
-	immediateContext->DrawIndexed(mesh.IndexCount, 0, 0);
+	immediateContext->DrawIndexed(_mesh.IndexCount, 0, 0);
 
-	if (Child != nullptr)
+	if (_pChild != nullptr)
 	{
-		Child->SetPixelShader(pixelShader);
-		Child->SetVertexShader(vertexShader);
-		Child->Draw();
+		_pChild->SetPixelShader(_pPixelShader);
+		_pChild->SetVertexShader(_pVertexShader);
+		_pChild->Draw();
 	}
 }

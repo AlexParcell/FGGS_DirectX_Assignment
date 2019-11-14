@@ -14,45 +14,42 @@ class Application;
 class GameObject
 {
 public:
-	MeshData mesh;
-	XMFLOAT4X4 world;
-	ID3D11VertexShader* vertexShader;
-	ID3D11PixelShader* pixelShader;
+	MeshData _mesh;
+	XMFLOAT4X4 _world;
+	XMFLOAT3 _position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 _scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	XMFLOAT3 _rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
-	GameObject* Child = nullptr;
+	Application* _pApp;
+	ID3D11VertexShader* _pVertexShader;
+	ID3D11PixelShader* _pPixelShader;
+	GameObject* _pChild = nullptr;
+	ID3D11ShaderResourceView* _pTexture = nullptr;
+	ID3D11ShaderResourceView* _pSpecMap = nullptr;
 
-	ID3D11ShaderResourceView* Texture = nullptr;
-	ID3D11ShaderResourceView* specMap = nullptr;
-
-	bool HasSpecular = false;
-
-	Application* app;
-
-	bool IsChild = false;
-
-	XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	XMFLOAT3 Scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	XMFLOAT3 Rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	bool _bHasSpecular = false;
+	bool _bIsChild = false;
 
 public:
 
-	GameObject(MeshData _mesh, Application* _app, wchar_t* textureName);
+	GameObject(MeshData mesh, Application* app, wchar_t* textureName);
 	~GameObject();
 
 	void Draw();
 	void Update(XMMATRIX WorldVector = XMMatrixIdentity());
 
-	void SetVertexShader(ID3D11VertexShader* vs) { vertexShader = vs; }
-	void SetPixelShader(ID3D11PixelShader* ps) { pixelShader = ps; }
+	void SetVertexShader(ID3D11VertexShader* vs) { _pVertexShader = vs; }
+	void SetPixelShader(ID3D11PixelShader* ps) { _pPixelShader = ps; }
 
-	void SetChild(GameObject* child) { Child = child; }
-	void SetIsChild(bool val) { IsChild = val; }
-	void SetHasSpec(bool value) { HasSpecular = value; }
+	void SetSpecularMap(wchar_t* specMapName);
 
-	XMFLOAT3 GetPosition() { return Position; }
-	void SetPosition(XMFLOAT3 pos) { Position = pos; }
-	XMFLOAT3 GetScale() { return Scale; }
-	void SetScale(XMFLOAT3 scale) { Scale = scale; }
-	XMFLOAT3 GetRotation() { return Rotation; }
-	void SetRotation(XMFLOAT3 rotation) { Rotation = rotation; }
+	void SetChild(GameObject* child) { _pChild = child; }
+	void SetIsChild(bool val) { _bIsChild = val; }
+
+	XMFLOAT3 GetPosition() { return _position; }
+	void SetPosition(XMFLOAT3 pos) { _position = pos; }
+	XMFLOAT3 GetScale() { return _scale; }
+	void SetScale(XMFLOAT3 scale) { _scale = scale; }
+	XMFLOAT3 GetRotation() { return _rotation; }
+	void SetRotation(XMFLOAT3 rotation) { _rotation = rotation; }
 };
