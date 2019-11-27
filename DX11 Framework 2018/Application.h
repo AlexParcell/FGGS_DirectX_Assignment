@@ -38,6 +38,9 @@ private:
 	ID3D11RenderTargetView* _pRenderTargetView = nullptr;
 	ID3D11VertexShader*     _pVertexShader = nullptr;
 	ID3D11PixelShader*      _pPixelShader = nullptr;
+	ID3D11VertexShader* _pSkyboxVS = nullptr;
+	ID3D11PixelShader* _pSkyboxPS = nullptr;
+
 	ID3D11InputLayout*      _pVertexLayout = nullptr;
 	ID3D11Buffer*           _pConstantBuffer = nullptr;
 	ID3D11DepthStencilView* _pDepthStencilView = nullptr;
@@ -54,6 +57,7 @@ private:
 	LightingData* _pLight = nullptr;
 	ConstantBuffer* _pCurrentCB;
 
+	GameObject* Skybox = nullptr;
 	vector<GameObject*> _pCubes;
 
 	bool _bWireframe = false;

@@ -55,10 +55,10 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
     }
 
 	// Set up cameras
-	_pFirstPersonCam = new Camera(CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pFirstPersonCam = new Camera(CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 250.0f);
 	_pActiveCam = _pFirstPersonCam;
 	
-	_pThirdPersonCam = new Camera(CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pThirdPersonCam = new Camera(CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 200.0f);
 	_pPathCam = new Camera(CT_Path, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
 
     // Initialize the view matrix
@@ -111,6 +111,42 @@ HRESULT Application::InitShadersAndInputLayout()
 
     if (FAILED(hr))
         return hr;
+
+	// Make Skybox Vertex Shader
+	ID3DBlob* pSkyboxVSBlob = nullptr;
+	hr = CompileShaderFromFile(L"DX11 Framework.fx", "SkyboxVS", "vs_4_0", &pSkyboxVSBlob);
+
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr,
+			L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		return hr;
+	}
+
+	hr = _pd3dDevice->CreateVertexShader(pSkyboxVSBlob->GetBufferPointer(), pSkyboxVSBlob->GetBufferSize(), nullptr, &_pSkyboxVS);
+
+	if (FAILED(hr))
+	{
+		pSkyboxVSBlob->Release();
+		return hr;
+	}
+
+	// Create Skybox Pixel Shader
+	ID3DBlob* pSkyboxPSBlob = nullptr;
+	hr = CompileShaderFromFile(L"DX11 Framework.fx", "SkyboxPS", "ps_4_0", &pSkyboxPSBlob);
+
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr,
+			L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		return hr;
+	}
+
+	hr = _pd3dDevice->CreatePixelShader(pSkyboxPSBlob->GetBufferPointer(), pSkyboxPSBlob->GetBufferSize(), nullptr, &_pSkyboxPS);
+	pSkyboxPSBlob->Release();
+
+	if (FAILED(hr))
+		return hr;
 
     // Define the input layout
     D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -322,6 +358,8 @@ HRESULT Application::InitDevice()
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
 			GameObject* temp = new GameObject(cube, this, L"Crate_COLOR.dds");
+			temp->SetPixelShader(_pPixelShader);
+			temp->SetVertexShader(_pVertexShader);
 
 			// Set Position
 			temp->SetPosition(XMFLOAT3(i * 10, 0.0f, j * 10));
@@ -331,6 +369,8 @@ HRESULT Application::InitDevice()
 			GameObject* child = new GameObject(plane, this, L"Hercules_COLOR.dds");
 			child->SetPosition(XMFLOAT3(4.0f, 0.0f, 0.0f));
 			child->SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
+			temp->SetPixelShader(_pPixelShader);
+			temp->SetVertexShader(_pVertexShader);
 			
 			child->SetIsChild(true);
 			temp->SetChild(child);
@@ -339,6 +379,12 @@ HRESULT Application::InitDevice()
 			_pCubes.push_back(temp);
 		}
 	}
+
+	Skybox = new GameObject(cube, this, L"Skybox.dds");
+	Skybox->SetScale(XMFLOAT3(-60.0f, -60.0f, -60.0f));
+	Skybox->SetVertexShader(_pSkyboxVS);
+	Skybox->SetPixelShader(_pSkyboxPS);
+	Skybox->SetIsChild(true);
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -430,7 +476,8 @@ void Application::Update()
     //
     // Animate the cube
     //
-
+	Skybox->SetPosition(_pActiveCam->GetEye());
+	Skybox->Update();
 	for (int i = 0; i < _pCubes.size(); i++)
 	{
 		_pCubes[i]->Update();
@@ -502,10 +549,9 @@ void Application::Draw()
 
     // Render objects
 
+	Skybox->Draw();
 	for (int i = 0; i < _pCubes.size(); i++)
 	{
-		_pCubes[i]->SetPixelShader(_pPixelShader);
-		_pCubes[i]->SetVertexShader(_pVertexShader);
 		_pCubes[i]->Draw();
 	}
 

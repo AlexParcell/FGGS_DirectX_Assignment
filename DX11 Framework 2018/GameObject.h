@@ -46,6 +46,8 @@ public:
 	void SetChild(GameObject* child) { _pChild = child; }
 	void SetIsChild(bool val) { _bIsChild = val; }
 
+	MeshData GetMeshData() { return _mesh; }
+
 	XMFLOAT3 GetPosition() { return _position; }
 	void SetPosition(XMFLOAT3 pos) { _position = pos; }
 	XMFLOAT3 GetScale() { return _scale; }

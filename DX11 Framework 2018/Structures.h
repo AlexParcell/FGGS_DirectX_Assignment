@@ -18,8 +18,8 @@ struct LightingData
 	XMFLOAT4 diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f); // Diffuse light colour (RGBA)
 
 	// Ambient Light
-	XMFLOAT4 ambientMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f); // Ambient material properties (RGBA)
-	XMFLOAT4 ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f); // Ambient light colour (RGBA)
+	XMFLOAT4 ambientMaterial = XMFLOAT4(0.6f, 0.6f, 0.6f, 0.2f); // Ambient material properties (RGBA)
+	XMFLOAT4 ambientLight = XMFLOAT4(0.8f, 0.8f, 0.8f, 0.2f); // Ambient light colour (RGBA)
 
 	// Specular Light
 	XMFLOAT4 specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f); // Specular material properties (RGBA)

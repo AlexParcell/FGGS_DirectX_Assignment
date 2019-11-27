@@ -100,3 +100,30 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
 	return Color;
 }
+
+// SKYBOX SHADERS
+
+VS_OUTPUT SkyboxVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
+{
+	float3 _invNormal = Normal * 1.0f;
+	VS_OUTPUT output = (VS_OUTPUT)0;
+	output.Pos = mul(Pos, World);
+
+	output.PosW = output.Pos.xyz;
+
+	output.Pos = mul(output.Pos, View);
+	output.Pos = mul(output.Pos, Projection);
+
+	// Convert from local space to world space 
+	// W component of vector is 0 as vectors cannot be translated
+	output.Normal = mul(float4(_invNormal, 0.0f), World).xyz;
+
+	output.TexCoord = TexCoord;
+
+	return output;
+}
+
+float4 SkyboxPS(VS_OUTPUT input) : SV_Target
+{
+	return txDiffuse.Sample(samLinear, input.TexCoord);
+}
