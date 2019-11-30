@@ -1,10 +1,9 @@
 #include "Camera.h"
 #include "Application.h"
 
-Camera::Camera(CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
+Camera::Camera(CameraType camType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
 {
 	_camType = camType;
-	_pathType = pathType;
 	_windowWidth = windowWidth;
 	_windowHeight = windowHeight;
 	_nearDepth = nearDepth;
@@ -16,8 +15,6 @@ Camera::Camera(CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT w
 
 void Camera::Update()
 {
-	UpdateVectors();
-
 	switch (_camType)
 	{
 		case (CT_FirstPerson):
@@ -30,13 +27,9 @@ void Camera::Update()
 			ThirdPersonUpdate();
 		}
 		break;
-		case (CT_Path):
-		{
-			PathUpdate();
-		}
-		break;
 	}
 
+	UpdateVectors();
 	SetViewMatrix();
 }
 
@@ -147,33 +140,12 @@ void Camera::ThirdPersonUpdate()
 	XMStoreFloat3(&_eye, eye);
 }
 
-void Camera::PathUpdate()
-{
-	switch (_pathType)
-	{
-		case (PT_Linear):
-		{
-			// TO DO
-		}
-		break;
-		case (PT_CatmullRom):
-		{
-			// TO DO
-		}
-		break;
-		case (PT_Bezier):
-		{
-			// TO DO
-		}
-		break;
-	}
-}
-
 void Camera::SetViewMatrix()
 {
 	XMVECTOR eye = XMLoadFloat3(&_eye);
 	XMVECTOR direction = XMLoadFloat3(&_direction);
 	XMVECTOR up = XMLoadFloat3(&_up);
+	XMVECTOR target = XMLoadFloat3(&_target);
 	XMMATRIX viewMatrix;
 
 	switch (_camType)
@@ -185,13 +157,9 @@ void Camera::SetViewMatrix()
 	break;
 	case (CT_ThirdPerson):
 	{
-		viewMatrix = XMMatrixLookToLH(eye, direction, up);
-	}
-	break;
-	case (CT_Path):
-	{
 		viewMatrix = XMMatrixLookAtLH(eye, direction, up);
 	}
+	break;
 	}
 
 	XMStoreFloat4x4(&_viewMatrix, viewMatrix);
@@ -207,6 +175,14 @@ void Camera::UpdateVectors()
 	XMVECTOR right = XMLoadFloat3(&_right);
 	XMVECTOR up = XMLoadFloat3(&_up);
 
+	// If third person camera, have the camera direction set to look at the object
+	if (_camType == CT_ThirdPerson)
+	{
+		XMVECTOR target = XMLoadFloat3(&_target);
+		direction = XMVector3Normalize(target - eye);
+		XMStoreFloat3(&_direction, direction);
+	}
+
 	forward = XMVector3Normalize(direction - eye);
 	right = XMVector3Normalize(XMVector3Cross(globalUp, forward));
 	up = XMVector3Normalize(XMVector3Cross(forward, right));
@@ -218,7 +194,7 @@ void Camera::UpdateVectors()
 
 void Camera::Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
 {
-	XMStoreFloat4x4(&_projectionMatrix, XMMatrixPerspectiveFovLH(XM_PIDIV2, windowWidth / windowHeight, 0.01f, 100.0f));
+	XMStoreFloat4x4(&_projectionMatrix, XMMatrixPerspectiveFovLH(XM_PIDIV2, windowWidth / windowHeight, nearDepth, farDepth));
 }
 
 XMFLOAT4X4 Camera::GetViewProjectionMatrix()

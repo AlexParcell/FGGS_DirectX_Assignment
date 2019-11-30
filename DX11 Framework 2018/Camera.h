@@ -15,14 +15,6 @@ enum CameraType
 {
 	CT_FirstPerson = 0,
 	CT_ThirdPerson,
-	CT_Path
-};
-
-enum PathType
-{
-	PT_Linear = 0,
-	PT_Bezier,
-	PT_CatmullRom
 };
 
 class Camera
@@ -41,7 +33,6 @@ class Camera
 	FLOAT _farDepth;
 
 	CameraType _camType = CT_FirstPerson;
-	PathType _pathType = PT_Linear;
 
 	float _fCameraSensitivity = 0.05f;
 	float _fInterpTime = 0.0f;
@@ -51,12 +42,11 @@ class Camera
 	void UpdateVectors();
 
 public:
-	Camera(CameraType camType, PathType pathType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
+	Camera(CameraType camType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 
 	void Update();
 	void FirstPersonUpdate();
 	void ThirdPersonUpdate();
-	void PathUpdate();
 	void Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 
 	XMFLOAT4X4 GetViewMatrix() { return _viewMatrix; }
@@ -71,5 +61,4 @@ public:
 
 	void SetTargetVector(XMFLOAT3 Target) { _target = Target; }
 	void SetCameraType(CameraType type) { _camType = type; }
-	void SetPathType(PathType type) { _pathType = type; }
 };

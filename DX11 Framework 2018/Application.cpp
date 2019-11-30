@@ -55,11 +55,10 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
     }
 
 	// Set up cameras
-	_pFirstPersonCam = new Camera(CT_FirstPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 250.0f);
+	_pFirstPersonCam = new Camera(CT_FirstPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
 	_pActiveCam = _pFirstPersonCam;
 	
-	_pThirdPersonCam = new Camera(CT_ThirdPerson, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 200.0f);
-	_pPathCam = new Camera(CT_Path, PT_Linear, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+	_pThirdPersonCam = new Camera(CT_ThirdPerson, _WindowWidth, _WindowHeight, 0.01f, 200.0f);
 
     // Initialize the view matrix
 	_view = _pActiveCam->GetViewMatrix();
@@ -381,7 +380,7 @@ HRESULT Application::InitDevice()
 	}
 
 	Skybox = new GameObject(cube, this, L"Skybox.dds");
-	Skybox->SetScale(XMFLOAT3(-60.0f, -60.0f, -60.0f));
+	Skybox->SetScale(XMFLOAT3(-100.0f, -100.0f, -100.0f));
 	Skybox->SetVertexShader(_pSkyboxVS);
 	Skybox->SetPixelShader(_pSkyboxPS);
 	Skybox->SetIsChild(true);
@@ -504,11 +503,6 @@ void Application::Update()
 	if (GetAsyncKeyState(0x32)) // 2
 	{
 		_pActiveCam = _pThirdPersonCam;
-	}
-
-	if (GetAsyncKeyState(0x33)) // 3
-	{
-		_pActiveCam = _pPathCam;
 	}
 
 	_pActiveCam->Update();
