@@ -180,9 +180,9 @@ float4 WaterPS(VS_OUTPUT input) : SV_Target
 		specular = (specularAmount * (SpecularMtrl * SpecularLight));
 	}
 
-	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
+	float4 colour = float4(0.0f, 0.0f, 0.75f, 1.0f);
 
-	Color.rgb = textureColour.rgb * (ambient.rgb + diffuse.rgb + specular.rgb);
+	Color.rgb = colour.rgb * (ambient.rgb + diffuse.rgb + specular.rgb);
 	Color.a = DiffuseMtrl.a;
 
 	return Color;
