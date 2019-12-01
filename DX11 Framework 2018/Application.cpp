@@ -424,8 +424,8 @@ HRESULT Application::InitDevice()
 
 	MeshData grid = MakeGrid(10);
 	Water = new GameObject(grid, this, L"Skybox.dds");
-	Water->SetScale(XMFLOAT3(500.0f, 1.0f, 500.0f));
-	Water->SetPosition(XMFLOAT3(-250.0f, -5.0f, -250.0f));
+	Water->SetScale(XMFLOAT3(100.0f, 1.0f, 100.0f));
+	Water->SetPosition(XMFLOAT3(-500.0f, -5.0f, -500.0f));
 	Water->SetVertexShader(_pWaterVS);
 	Water->SetPixelShader(_pWaterPS);
 	Water->SetIsChild(true);
@@ -479,79 +479,87 @@ MeshData Application::MakeGrid(int size)
 	UINT IndexCount;
 	MeshData mesh;
 
-	int dimension = 0;
+		HRESULT hr;
 
-	if (size < 1)
-	{
-		dimension = 1;
-	}
-	else
-	{
-		dimension = size;
-	}
+		int dimension = 0;
 
-	dimension++;
-
-	vector<SimpleVertex*> vertices;
-	vector<WORD> indices;
-
-	int actualVertSize = 0;
-	int actualIndSize = 0;
-
-	for (int z = 0, index = 0; z < dimension; ++z)
-	{
-		for (int x = 0; x < dimension; ++x, ++index)
+		if (size < 1)
 		{
-			SimpleVertex* vert = new SimpleVertex();
-			vert->Pos = XMFLOAT3(x, 0.0f, z);
-			vert->Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
-			vertices.push_back(vert);
-			actualVertSize++;
+			dimension = 1;
 		}
-	}
-
-	for (int z = 0, index = 0; z < dimension - 1; ++z)
-	{
-		for (int x = 0; x < dimension - 1; ++x)
+		else
 		{
-			indices.push_back(z * dimension + x);
-			indices.push_back((z + 1) * dimension + x);
-			indices.push_back((z + 1) * dimension + (x + 1));
-			indices.push_back(z * dimension + x);
-			indices.push_back((z + 1) * dimension + (x + 1));
-			indices.push_back(z * dimension + (x + 1));
-			actualIndSize += 6;
+			dimension = size;
 		}
-	}
 
-	D3D11_BUFFER_DESC vbd;
-	ZeroMemory(&vbd, sizeof(vbd));
-	vbd.Usage = D3D11_USAGE_DEFAULT;
-	vbd.ByteWidth = sizeof(SimpleVertex) * vertices.size();
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vbd.CPUAccessFlags = 0;
+		dimension++;
 
-	D3D11_SUBRESOURCE_DATA vInitData;
-	ZeroMemory(&vInitData, sizeof(vInitData));
-	vInitData.pSysMem = vertices[0];
+		int vertexCount = (dimension + 1) * (dimension + 1);
+		int indexCount = 6 * (dimension * dimension);
+		int actualVertexCount = 0;
+		int actualIndexCount = 0;
+		SimpleVertex* vertices = new SimpleVertex[vertexCount];
+		WORD* indices = new WORD[indexCount];
 
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * indices.size();
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = 0;
+		for (int z = 0, index = 0; z < dimension; ++z)
+		{
+			for (int x = 0; x < dimension; ++x, ++index)
+			{
+				vertices[index].Pos = XMFLOAT3(x, 0.0f, z);
+				vertices[index].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+				actualVertexCount++;
+			}
+		}
 
-	D3D11_SUBRESOURCE_DATA InitData;
-	ZeroMemory(&InitData, sizeof(InitData));
-	InitData.pSysMem = &indices[0];
+		D3D11_BUFFER_DESC vbd;
+		ZeroMemory(&vbd, sizeof(vbd));
+		vbd.Usage = D3D11_USAGE_DEFAULT;
+		vbd.ByteWidth = sizeof(SimpleVertex) * actualVertexCount;
+		vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		vbd.CPUAccessFlags = 0;
 
-	_pd3dDevice->CreateBuffer(&vbd, &vInitData, &VertexBuffer);
-	_pd3dDevice->CreateBuffer(&bd, &InitData, &IndexBuffer);
+		D3D11_SUBRESOURCE_DATA vInitData;
+		ZeroMemory(&vInitData, sizeof(vInitData));
+		vInitData.pSysMem = vertices;
+
+		hr = _pd3dDevice->CreateBuffer(&vbd, &vInitData, &VertexBuffer);
+
+		delete[] vertices;
+
+		for (int z = 0, index = 0; z < dimension - 1; ++z)
+		{
+			for (int x = 0; x < dimension - 1; ++x)
+			{
+				indices[index++] = z * dimension + x;
+				indices[index++] = (z + 1) * dimension + x;
+				indices[index++] = (z + 1) * dimension + (x + 1);
+
+				indices[index++] = z * dimension + x;
+				indices[index++] = (z + 1) * dimension + (x + 1);
+				indices[index++] = z * dimension + (x + 1);
+				actualIndexCount += 6;
+			}
+		}
+
+		D3D11_BUFFER_DESC bd;
+		ZeroMemory(&bd, sizeof(bd));
+
+		bd.Usage = D3D11_USAGE_DEFAULT;
+		bd.ByteWidth = sizeof(WORD) * actualIndexCount;
+		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		bd.CPUAccessFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA InitData;
+		ZeroMemory(&InitData, sizeof(InitData));
+		InitData.pSysMem = indices;
+		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &IndexBuffer);
+
+		delete[] indices;
+
 
 	mesh.VertexBuffer = VertexBuffer;
 	mesh.IndexBuffer = IndexBuffer;
-	mesh.IndexCount = indices.size();
+	mesh.IndexCount = actualIndexCount;
 	mesh.VBOffset = 0;
 	mesh.VBStride = sizeof(SimpleVertex);
 
@@ -616,18 +624,18 @@ void Application::Update()
 	}
 	Water->Update();
 
-	/*if (GetAsyncKeyState(VK_UP))
+	if (GetAsyncKeyState(VK_F1))
 	{
-		if (Wireframe)
+		if (_bWireframe)
 		{
-			_pImmediateContext->RSSetState(_fillMode);
+			_pImmediateContext->RSSetState(_pFillMode);
 		}
 		else
 		{
-			_pImmediateContext->RSSetState(_wireFrame);
+			_pImmediateContext->RSSetState(_pWireFrame);
 		}
-		Wireframe = !Wireframe;
-	}*/
+		_bWireframe = !_bWireframe;
+	}
 
 	if (GetAsyncKeyState(0x31)) // 1
 	{
