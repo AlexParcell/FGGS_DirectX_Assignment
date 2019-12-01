@@ -147,6 +147,42 @@ HRESULT Application::InitShadersAndInputLayout()
 	if (FAILED(hr))
 		return hr;
 
+	// Make Water Vertex Shader
+	ID3DBlob* pWaterVSBlob = nullptr;
+	hr = CompileShaderFromFile(L"DX11 Framework.fx", "WaterVS", "vs_4_0", &pWaterVSBlob);
+
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr,
+			L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		return hr;
+	}
+
+	hr = _pd3dDevice->CreateVertexShader(pWaterVSBlob->GetBufferPointer(), pWaterVSBlob->GetBufferSize(), nullptr, &_pWaterVS);
+
+	if (FAILED(hr))
+	{
+		pWaterVSBlob->Release();
+		return hr;
+	}
+
+	// Create Skybox Pixel Shader
+	ID3DBlob* pWaterPSBlob = nullptr;
+	hr = CompileShaderFromFile(L"DX11 Framework.fx", "WaterPS", "ps_4_0", &pWaterPSBlob);
+
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr,
+			L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		return hr;
+	}
+
+	hr = _pd3dDevice->CreatePixelShader(pWaterPSBlob->GetBufferPointer(), pWaterPSBlob->GetBufferSize(), nullptr, &_pWaterPS);
+	pWaterPSBlob->Release();
+
+	if (FAILED(hr))
+		return hr;
+
     // Define the input layout
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
@@ -368,8 +404,8 @@ HRESULT Application::InitDevice()
 			GameObject* child = new GameObject(plane, this, L"Hercules_COLOR.dds");
 			child->SetPosition(XMFLOAT3(4.0f, 0.0f, 0.0f));
 			child->SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
-			temp->SetPixelShader(_pPixelShader);
-			temp->SetVertexShader(_pVertexShader);
+			child->SetPixelShader(_pPixelShader);
+			child->SetVertexShader(_pVertexShader);
 			
 			child->SetIsChild(true);
 			temp->SetChild(child);
@@ -379,11 +415,21 @@ HRESULT Application::InitDevice()
 		}
 	}
 
-	Skybox = new GameObject(cube, this, L"Skybox.dds");
-	Skybox->SetScale(XMFLOAT3(-100.0f, -100.0f, -100.0f));
+	MeshData sphere = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
+	Skybox = new GameObject(sphere, this, L"Skybox.dds");
+	Skybox->SetScale(XMFLOAT3(-300.0f, -300.0f, -300.0f));
 	Skybox->SetVertexShader(_pSkyboxVS);
 	Skybox->SetPixelShader(_pSkyboxPS);
 	Skybox->SetIsChild(true);
+
+	MeshData grid = MakeGrid(10);
+	Water = new GameObject(grid, this, L"Skybox.dds");
+	Water->SetScale(XMFLOAT3(500.0f, 1.0f, 500.0f));
+	Water->SetPosition(XMFLOAT3(-250.0f, -5.0f, -250.0f));
+	Water->SetVertexShader(_pWaterVS);
+	Water->SetPixelShader(_pWaterPS);
+	Water->SetIsChild(true);
+
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -423,6 +469,93 @@ HRESULT Application::InitDevice()
 	_pImmediateContext->RSSetState(_pFillMode);
 
     return S_OK;
+}
+
+// To do: figure out how this works
+MeshData Application::MakeGrid(int size)
+{
+	ID3D11Buffer* VertexBuffer;
+	ID3D11Buffer* IndexBuffer;
+	UINT IndexCount;
+	MeshData mesh;
+
+	int dimension = 0;
+
+	if (size < 1)
+	{
+		dimension = 1;
+	}
+	else
+	{
+		dimension = size;
+	}
+
+	dimension++;
+
+	vector<SimpleVertex*> vertices;
+	vector<WORD> indices;
+
+	int actualVertSize = 0;
+	int actualIndSize = 0;
+
+	for (int z = 0, index = 0; z < dimension; ++z)
+	{
+		for (int x = 0; x < dimension; ++x, ++index)
+		{
+			SimpleVertex* vert = new SimpleVertex();
+			vert->Pos = XMFLOAT3(x, 0.0f, z);
+			vert->Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+			vertices.push_back(vert);
+			actualVertSize++;
+		}
+	}
+
+	for (int z = 0, index = 0; z < dimension - 1; ++z)
+	{
+		for (int x = 0; x < dimension - 1; ++x)
+		{
+			indices.push_back(z * dimension + x);
+			indices.push_back((z + 1) * dimension + x);
+			indices.push_back((z + 1) * dimension + (x + 1));
+			indices.push_back(z * dimension + x);
+			indices.push_back((z + 1) * dimension + (x + 1));
+			indices.push_back(z * dimension + (x + 1));
+			actualIndSize += 6;
+		}
+	}
+
+	D3D11_BUFFER_DESC vbd;
+	ZeroMemory(&vbd, sizeof(vbd));
+	vbd.Usage = D3D11_USAGE_DEFAULT;
+	vbd.ByteWidth = sizeof(SimpleVertex) * vertices.size();
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vInitData;
+	ZeroMemory(&vInitData, sizeof(vInitData));
+	vInitData.pSysMem = vertices[0];
+
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(WORD) * indices.size();
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA InitData;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = &indices[0];
+
+	_pd3dDevice->CreateBuffer(&vbd, &vInitData, &VertexBuffer);
+	_pd3dDevice->CreateBuffer(&bd, &InitData, &IndexBuffer);
+
+	mesh.VertexBuffer = VertexBuffer;
+	mesh.IndexBuffer = IndexBuffer;
+	mesh.IndexCount = indices.size();
+	mesh.VBOffset = 0;
+	mesh.VBStride = sizeof(SimpleVertex);
+
+	return mesh;
 }
 
 void Application::Cleanup()
@@ -481,6 +614,7 @@ void Application::Update()
 	{
 		_pCubes[i]->Update();
 	}
+	Water->Update();
 
 	/*if (GetAsyncKeyState(VK_UP))
 	{
@@ -548,6 +682,7 @@ void Application::Draw()
 	{
 		_pCubes[i]->Draw();
 	}
+	Water->Draw();
 
     // Present our back buffer to our front buffer
     _pSwapChain->Present(0, 0);

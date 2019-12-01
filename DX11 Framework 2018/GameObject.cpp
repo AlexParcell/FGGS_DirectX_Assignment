@@ -68,8 +68,6 @@ void GameObject::Draw()
 
 	if (_pChild != nullptr)
 	{
-		_pChild->SetPixelShader(_pPixelShader);
-		_pChild->SetVertexShader(_pVertexShader);
 		_pChild->Draw();
 	}
 }

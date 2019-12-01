@@ -40,6 +40,8 @@ private:
 	ID3D11PixelShader*      _pPixelShader = nullptr;
 	ID3D11VertexShader* _pSkyboxVS = nullptr;
 	ID3D11PixelShader* _pSkyboxPS = nullptr;
+	ID3D11VertexShader* _pWaterVS = nullptr;
+	ID3D11PixelShader* _pWaterPS = nullptr;
 
 	ID3D11InputLayout*      _pVertexLayout = nullptr;
 	ID3D11Buffer*           _pConstantBuffer = nullptr;
@@ -58,6 +60,7 @@ private:
 	ConstantBuffer* _pCurrentCB;
 
 	GameObject* Skybox = nullptr;
+	GameObject* Water = nullptr;
 	vector<GameObject*> _pCubes;
 
 	bool _bWireframe = false;
@@ -81,6 +84,8 @@ public:
 
 	void Update();
 	void Draw();
+
+	MeshData MakeGrid(int size);
 
 	ConstantBuffer* GetCurrentConstantBuffer() { return _pCurrentCB; }
 	ID3D11Buffer* GetConstantBuffer() { return _pConstantBuffer; }
