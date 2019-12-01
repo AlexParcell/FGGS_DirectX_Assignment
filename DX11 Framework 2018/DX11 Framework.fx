@@ -126,7 +126,7 @@ float4 SkyboxPS(VS_OUTPUT input) : SV_Target
 {
 	float4 color = float4(95.0f / 255.0f, 205.0f / 255.0f, 228.0f / 255.0f, 1.0f);
 	float4 white = float4(1.0f, 1.0f, 1.0f, 1.0f);
-	return lerp(float4(1, 1, 1, 1), float4(0.3f, 0.6f, 1.0f, 1.0f), clamp(input.PosW.y * .005 + .3, 0, 1));
+	return lerp(float4(1, 1, 1, 1), float4(0.3f, 0.6f, 1.0f, 1.0f), clamp(input.PosW.y * .005 + .5, 0, 1));
 }
 
 VS_OUTPUT WaterVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
@@ -180,9 +180,9 @@ float4 WaterPS(VS_OUTPUT input) : SV_Target
 		specular = (specularAmount * (SpecularMtrl * SpecularLight));
 	}
 
-	float4 waterColor = float4(0.0f, 0.0f, 1.0f, 1.0f);
+	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
 
-	Color.rgb = waterColor.rgb * (ambient.rgb + diffuse.rgb + specular.rgb);
+	Color.rgb = textureColour.rgb * (ambient.rgb + diffuse.rgb + specular.rgb);
 	Color.a = DiffuseMtrl.a;
 
 	return Color;

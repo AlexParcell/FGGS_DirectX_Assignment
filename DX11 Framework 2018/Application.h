@@ -61,6 +61,7 @@ private:
 
 	GameObject* Skybox = nullptr;
 	GameObject* Water = nullptr;
+	GameObject* Boat = nullptr;
 	vector<GameObject*> _pCubes;
 
 	bool _bWireframe = false;

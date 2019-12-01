@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "Application.h"
+#include "GameObject.h"
 
 Camera::Camera(CameraType camType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
 {
@@ -145,7 +146,6 @@ void Camera::SetViewMatrix()
 	XMVECTOR eye = XMLoadFloat3(&_eye);
 	XMVECTOR direction = XMLoadFloat3(&_direction);
 	XMVECTOR up = XMLoadFloat3(&_up);
-	XMVECTOR target = XMLoadFloat3(&_target);
 	XMMATRIX viewMatrix;
 
 	switch (_camType)
@@ -178,7 +178,7 @@ void Camera::UpdateVectors()
 	// If third person camera, have the camera direction set to look at the object
 	if (_camType == CT_ThirdPerson)
 	{
-		XMVECTOR target = XMLoadFloat3(&_target);
+		XMVECTOR target = XMLoadFloat3(&_pTarget->GetPosition());
 		direction = XMVector3Normalize(target - eye);
 		XMStoreFloat3(&_direction, direction);
 	}

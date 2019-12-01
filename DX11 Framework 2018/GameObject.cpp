@@ -24,11 +24,6 @@ void GameObject::SetSpecularMap(wchar_t* specMapName)
 
 void GameObject::Update(XMMATRIX ParentWorld)
 {
-	if (!_bIsChild)
-	{
-		_rotation.y = _pApp->GetTime();
-	}
-
 	XMVECTOR scale = XMLoadFloat3(&_scale);
 	XMVECTOR pos = XMLoadFloat3(&_position);
 	XMVECTOR rot = XMLoadFloat3(&_rotation);

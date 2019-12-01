@@ -54,18 +54,6 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
         return E_FAIL;
     }
 
-	// Set up cameras
-	_pFirstPersonCam = new Camera(CT_FirstPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
-	_pActiveCam = _pFirstPersonCam;
-	
-	_pThirdPersonCam = new Camera(CT_ThirdPerson, _WindowWidth, _WindowHeight, 0.01f, 200.0f);
-
-    // Initialize the view matrix
-	_view = _pActiveCam->GetViewMatrix();
-
-    // Initialize the projection matrix
-	_projection = _pActiveCam->GetProjectionMatrix();
-
 	return S_OK;
 }
 
@@ -385,52 +373,40 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	MeshData cube = OBJLoader::Load("cube.obj", _pd3dDevice, false);
-	MeshData plane = OBJLoader::Load("Hercules.obj", _pd3dDevice);
-
-	for (int i = 0; i < GRID_SIZE; i++)
-	{
-		for (int j = 0; j < GRID_SIZE; j++)
-		{
-			GameObject* temp = new GameObject(cube, this, L"Crate_COLOR.dds");
-			temp->SetPixelShader(_pPixelShader);
-			temp->SetVertexShader(_pVertexShader);
-
-			// Set Position
-			temp->SetPosition(XMFLOAT3(i * 10, 0.0f, j * 10));
-			temp->SetSpecularMap(L"Cube_SPEC.dds");
-			
-			// Add Child
-			GameObject* child = new GameObject(plane, this, L"Hercules_COLOR.dds");
-			child->SetPosition(XMFLOAT3(4.0f, 0.0f, 0.0f));
-			child->SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
-			child->SetPixelShader(_pPixelShader);
-			child->SetVertexShader(_pVertexShader);
-			
-			child->SetIsChild(true);
-			temp->SetChild(child);
-			
-
-			_pCubes.push_back(temp);
-		}
-	}
-
 	MeshData sphere = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
 	Skybox = new GameObject(sphere, this, L"Skybox.dds");
 	Skybox->SetScale(XMFLOAT3(-300.0f, -300.0f, -300.0f));
 	Skybox->SetVertexShader(_pSkyboxVS);
 	Skybox->SetPixelShader(_pSkyboxPS);
-	Skybox->SetIsChild(true);
 
 	MeshData grid = MakeGrid(10);
-	Water = new GameObject(grid, this, L"Skybox.dds");
+	Water = new GameObject(grid, this, L"Water_COLOR.dds");
 	Water->SetScale(XMFLOAT3(100.0f, 1.0f, 100.0f));
 	Water->SetPosition(XMFLOAT3(-500.0f, -5.0f, -500.0f));
 	Water->SetVertexShader(_pWaterVS);
 	Water->SetPixelShader(_pWaterPS);
-	Water->SetIsChild(true);
 
+	
+	MeshData boat = OBJLoader::Load("Boat.obj", _pd3dDevice);
+	Boat = new GameObject(boat, this, L"Boat_COLOR.dds");
+	Boat->SetPixelShader(_pPixelShader);
+	Boat->SetVertexShader(_pVertexShader);
+	Boat->SetPosition(XMFLOAT3(0.0f, -3.0f, 0.0f));
+	Boat->SetScale(XMFLOAT3(0.5f, 0.5f, 0.5f));
 
+	// Set up cameras
+	_pFirstPersonCam = new Camera(CT_FirstPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pActiveCam = _pFirstPersonCam;
+
+	_pThirdPersonCam = new Camera(CT_ThirdPerson, _WindowWidth, _WindowHeight, 0.01f, 200.0f);
+	_pThirdPersonCam->SetTarget(Boat);
+
+	// Initialize the view matrix
+	_view = _pActiveCam->GetViewMatrix();
+
+	// Initialize the projection matrix
+	_projection = _pActiveCam->GetProjectionMatrix();
+	
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -507,7 +483,48 @@ MeshData Application::MakeGrid(int size)
 			{
 				vertices[index].Pos = XMFLOAT3(x, 0.0f, z);
 				vertices[index].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+				vertices[index].TexC = XMFLOAT2(2, 0);
 				actualVertexCount++;
+			}
+		}
+
+		for (int z = 0, index = 0; z < dimension - 1; ++z)
+		{
+			for (int x = 0; x < dimension - 1; ++x)
+			{
+				indices[index] = z * dimension + x;
+				if (vertices[indices[index]].TexC.x == 2)
+				{
+					vertices[indices[index]].TexC = XMFLOAT2(0.0f, 0.0f);
+				}
+				index++;
+
+				indices[index] = (z + 1) * dimension + x;
+				if (vertices[indices[index]].TexC.x == 2)
+				{
+					vertices[indices[index]].TexC = XMFLOAT2(1.0f, 0.0f);
+				}
+				index++;
+
+				indices[index] = (z + 1) * dimension + (x + 1);
+				if (vertices[indices[index]].TexC.x == 2)
+				{
+					vertices[indices[index]].TexC = XMFLOAT2(1.0f, 1.0f);
+				}
+				index++;
+
+				indices[index++] = z * dimension + x;
+
+				indices[index++] = (z + 1) * dimension + (x + 1);
+
+				indices[index] = z * dimension + (x + 1);
+				if (vertices[indices[index]].TexC.x == 2)
+				{
+					vertices[indices[index]].TexC = XMFLOAT2(0.0f, 1.0f);
+				}
+				index++;
+
+				actualIndexCount += 6;
 			}
 		}
 
@@ -525,21 +542,6 @@ MeshData Application::MakeGrid(int size)
 		hr = _pd3dDevice->CreateBuffer(&vbd, &vInitData, &VertexBuffer);
 
 		delete[] vertices;
-
-		for (int z = 0, index = 0; z < dimension - 1; ++z)
-		{
-			for (int x = 0; x < dimension - 1; ++x)
-			{
-				indices[index++] = z * dimension + x;
-				indices[index++] = (z + 1) * dimension + x;
-				indices[index++] = (z + 1) * dimension + (x + 1);
-
-				indices[index++] = z * dimension + x;
-				indices[index++] = (z + 1) * dimension + (x + 1);
-				indices[index++] = z * dimension + (x + 1);
-				actualIndexCount += 6;
-			}
-		}
 
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
@@ -568,10 +570,6 @@ MeshData Application::MakeGrid(int size)
 
 void Application::Cleanup()
 {
-	for (int i = 0; i < _pCubes.size(); i++)
-	{
-		delete _pCubes[i];
-	}
 	delete _pFirstPersonCam;
 	delete _pThirdPersonCam;
 	delete _pPathCam;
@@ -618,11 +616,8 @@ void Application::Update()
     //
 	Skybox->SetPosition(_pActiveCam->GetEye());
 	Skybox->Update();
-	for (int i = 0; i < _pCubes.size(); i++)
-	{
-		_pCubes[i]->Update();
-	}
 	Water->Update();
+	Boat->Update();
 
 	if (GetAsyncKeyState(VK_F1))
 	{
@@ -686,11 +681,8 @@ void Application::Draw()
     // Render objects
 
 	Skybox->Draw();
-	for (int i = 0; i < _pCubes.size(); i++)
-	{
-		_pCubes[i]->Draw();
-	}
 	Water->Draw();
+	Boat->Draw();
 
     // Present our back buffer to our front buffer
     _pSwapChain->Present(0, 0);

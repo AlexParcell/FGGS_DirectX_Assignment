@@ -10,6 +10,7 @@
 #include "OBJLoader.h"
 
 class Application;
+class GameObject;
 
 enum CameraType
 {
@@ -24,7 +25,7 @@ class Camera
 	XMFLOAT3 _up = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	XMFLOAT3 _right = XMFLOAT3(0.0f, 0.0f, 1.0f);
 	XMFLOAT3 _forward = XMFLOAT3(1.0f, 0.0f, 0.0f);
-	XMFLOAT3 _target = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	GameObject* _pTarget = nullptr;
 	XMFLOAT4X4 _viewMatrix;
 	XMFLOAT4X4 _projectionMatrix;
 	FLOAT _windowWidth;
@@ -59,6 +60,6 @@ public:
 	XMFLOAT3 GetRight() { return _right; }
 	XMFLOAT3 GetForward() { return _forward; }
 
-	void SetTargetVector(XMFLOAT3 Target) { _target = Target; }
+	void SetTarget(GameObject* Target) { _pTarget = Target; }
 	void SetCameraType(CameraType type) { _camType = type; }
 };
