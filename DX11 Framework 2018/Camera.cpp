@@ -117,15 +117,26 @@ void Camera::ThirdPersonUpdate()
 	XMVECTOR eye = XMLoadFloat3(&_eye);
 	XMVECTOR forward = XMLoadFloat3(&_forward);
 	XMVECTOR right = XMLoadFloat3(&_right);
+	XMVECTOR up = XMLoadFloat3(&_up);
+
+	if (GetAsyncKeyState(0x50)) // P
+	{
+		eye += forward * _fCameraSensitivity;
+	}
+
+	if (GetAsyncKeyState(0x4F)) // O
+	{
+		eye -= forward * _fCameraSensitivity;
+	}
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		eye += (forward * _fCameraSensitivity);
+		eye += (up * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		eye -= (forward * _fCameraSensitivity);
+		eye -= (up * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))
