@@ -29,6 +29,7 @@ public:
 
 	bool _bHasSpecular = false;
 	bool _bIsChild = false;
+	bool _bAffectedByWaves = false;
 
 public:
 
@@ -40,6 +41,8 @@ public:
 
 	void SetVertexShader(ID3D11VertexShader* vs) { _pVertexShader = vs; }
 	void SetPixelShader(ID3D11PixelShader* ps) { _pPixelShader = ps; }
+
+	void SetAffectedByWaves(bool val) { _bAffectedByWaves = true; }
 
 	void SetSpecularMap(wchar_t* specMapName);
 

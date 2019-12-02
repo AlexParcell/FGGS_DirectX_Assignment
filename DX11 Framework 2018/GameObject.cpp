@@ -27,6 +27,7 @@ void GameObject::Update(XMMATRIX ParentWorld)
 	XMVECTOR scale = XMLoadFloat3(&_scale);
 	XMVECTOR pos = XMLoadFloat3(&_position);
 	XMVECTOR rot = XMLoadFloat3(&_rotation);
+
 	XMStoreFloat4x4(&_world, XMMatrixScalingFromVector(scale) * XMMatrixRotationRollPitchYawFromVector(rot) * XMMatrixTranslationFromVector(pos) * ParentWorld);
 
 	if (_pChild != nullptr)

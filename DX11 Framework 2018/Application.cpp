@@ -393,6 +393,7 @@ HRESULT Application::InitDevice()
 	Boat->SetVertexShader(_pVertexShader);
 	Boat->SetPosition(XMFLOAT3(0.0f, -3.0f, 0.0f));
 	Boat->SetScale(XMFLOAT3(0.5f, 0.5f, 0.5f));
+	Boat->SetAffectedByWaves(true);
 
 	// Set up cameras
 	_pFirstPersonCam = new Camera(CT_FirstPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
