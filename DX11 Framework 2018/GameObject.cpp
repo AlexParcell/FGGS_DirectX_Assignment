@@ -26,7 +26,7 @@ void GameObject::MakeForwardVector()
 {
 	_forward.x = cos(_rotation.z) * cos(_rotation.y);
 	_forward.y = sin(_rotation.z) * cos(_rotation.y);
-	_forward.z = sin(_rotation.y);
+	_forward.z = sin(_rotation.y) * -1;
 }
 
 void GameObject::Update(XMMATRIX ParentWorld)
