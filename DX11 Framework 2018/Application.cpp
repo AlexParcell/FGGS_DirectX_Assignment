@@ -391,16 +391,16 @@ HRESULT Application::InitDevice()
 	Boat = new GameObject(boat, this, L"Boat_COLOR.dds");
 	Boat->SetPixelShader(_pPixelShader);
 	Boat->SetVertexShader(_pVertexShader);
-	Boat->SetPosition(XMFLOAT3(0.0f, -3.0f, 0.0f));
+	Boat->SetPosition(XMFLOAT3(0.0f, -4.5f, 0.0f));
 	Boat->SetScale(XMFLOAT3(0.5f, 0.5f, 0.5f));
 	Boat->SetAffectedByWaves(true);
 
 	// Set up cameras
 	_pFirstPersonCam = new Camera(CT_FirstPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
-	_pActiveCam = _pFirstPersonCam;
 
-	_pThirdPersonCam = new Camera(CT_ThirdPerson, _WindowWidth, _WindowHeight, 0.01f, 200.0f);
+	_pThirdPersonCam = new Camera(CT_ThirdPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
 	_pThirdPersonCam->SetTarget(Boat);
+	_pActiveCam = _pThirdPersonCam;
 
 	// Initialize the view matrix
 	_view = _pActiveCam->GetViewMatrix();

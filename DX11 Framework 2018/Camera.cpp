@@ -118,38 +118,45 @@ void Camera::ThirdPersonUpdate()
 	XMVECTOR forward = XMLoadFloat3(&_forward);
 	XMVECTOR right = XMLoadFloat3(&_right);
 	XMVECTOR up = XMLoadFloat3(&_up);
+	XMVECTOR offset = XMLoadFloat3(&_offset);
 
 	if (GetAsyncKeyState(0x50)) // P
 	{
-		eye += forward * _fCameraSensitivity;
+		offset += forward * _fCameraSensitivity;
 	}
 
 	if (GetAsyncKeyState(0x4F)) // O
 	{
-		eye -= forward * _fCameraSensitivity;
+		offset -= forward * _fCameraSensitivity;
 	}
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		eye += (up * _fCameraSensitivity);
+		offset += (up * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		eye -= (up * _fCameraSensitivity);
+		offset -= (up * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))
 	{
-		eye -= (right * _fCameraSensitivity);
+		offset -= (right * _fCameraSensitivity);
 	}
 
 	if (GetAsyncKeyState(VK_RIGHT))
 	{
-		eye += (right * _fCameraSensitivity);
+		offset += (right * _fCameraSensitivity);
 	}
 
-	XMStoreFloat3(&_eye, eye);
+	XMStoreFloat3(&_offset, offset);
+
+	// Offset our position by the target and our offset from it
+	XMFLOAT3 target = _pTarget->GetPosition();
+	_eye.x = target.x + _offset.x;
+	_eye.y = _offset.y;
+	_eye.z = target.z + _offset.z;
 }
 
 void Camera::SetViewMatrix()
@@ -159,19 +166,7 @@ void Camera::SetViewMatrix()
 	XMVECTOR up = XMLoadFloat3(&_up);
 	XMMATRIX viewMatrix;
 
-	switch (_camType)
-	{
-	case (CT_FirstPerson):
-	{
-		viewMatrix = XMMatrixLookAtLH(eye, direction, up);
-	}
-	break;
-	case (CT_ThirdPerson):
-	{
-		viewMatrix = XMMatrixLookAtLH(eye, direction, up);
-	}
-	break;
-	}
+	viewMatrix = XMMatrixLookAtLH(eye, direction, up);
 
 	XMStoreFloat4x4(&_viewMatrix, viewMatrix);
 }
@@ -190,8 +185,10 @@ void Camera::UpdateVectors()
 	if (_camType == CT_ThirdPerson)
 	{
 		XMVECTOR target = XMLoadFloat3(&_pTarget->GetPosition());
-		direction = XMVector3Normalize(target - eye);
+
+		direction = target;
 		XMStoreFloat3(&_direction, direction);
+		XMStoreFloat3(&_eye, eye);
 	}
 
 	forward = XMVector3Normalize(direction - eye);

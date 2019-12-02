@@ -132,7 +132,7 @@ float4 SkyboxPS(VS_OUTPUT input) : SV_Target
 VS_OUTPUT WaterVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
-	Pos.y += (clamp(Pos.x % 6.0f, 0.0f , 0.5f) + clamp(Pos.z % 6.0f, 0.0f, 0.5f)) * 3.0f * sin(gTime);
+	Pos.y += 2.0f * sin(gTime);
 
 	output.Pos = mul(Pos, World);
 

@@ -22,11 +22,43 @@ void GameObject::SetSpecularMap(wchar_t* specMapName)
 	CreateDDSTextureFromFile(_pApp->GetDevice(), specMapName, nullptr, &_pSpecMap);
 }
 
+void GameObject::MakeForwardVector()
+{
+	_forward.x = cos(_rotation.z) * cos(_rotation.y);
+	_forward.y = sin(_rotation.z) * cos(_rotation.y);
+	_forward.z = sin(_rotation.y);
+}
+
 void GameObject::Update(XMMATRIX ParentWorld)
 {
 	XMVECTOR scale = XMLoadFloat3(&_scale);
 	XMVECTOR pos = XMLoadFloat3(&_position);
 	XMVECTOR rot = XMLoadFloat3(&_rotation);
+
+	if (_bAffectedByWaves)
+	{
+		if (GetAsyncKeyState(0x41)) // A
+		{
+			_rotation.y -= 0.00025f * _pApp->GetTime();
+			rot = XMLoadFloat3(&_rotation);
+		}
+
+		if (GetAsyncKeyState(0x44)) // A
+		{
+			_rotation.y += 0.00025f * _pApp->GetTime();
+			rot = XMLoadFloat3(&_rotation);
+		}
+
+		MakeForwardVector();
+		XMVECTOR forward = XMVector3Normalize(XMLoadFloat3(&_forward));
+
+		if (GetAsyncKeyState(0x57)) // W
+		{
+			pos += forward * 0.01 * _pApp->GetTime();
+			XMStoreFloat3(&_position, pos);
+		}
+
+	}
 
 	XMStoreFloat4x4(&_world, XMMatrixScalingFromVector(scale) * XMMatrixRotationRollPitchYawFromVector(rot) * XMMatrixTranslationFromVector(pos) * ParentWorld);
 
@@ -36,7 +68,6 @@ void GameObject::Update(XMMATRIX ParentWorld)
 		_pChild->Update(world);
 	}
 }
-
 void GameObject::Draw()
 {
 	ConstantBuffer* cb = _pApp->GetCurrentConstantBuffer();

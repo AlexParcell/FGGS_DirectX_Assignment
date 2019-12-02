@@ -16,9 +16,10 @@ class GameObject
 public:
 	MeshData _mesh;
 	XMFLOAT4X4 _world;
-	XMFLOAT3 _position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 _position = XMFLOAT3(0.0f, -5.0f, 0.0f);
 	XMFLOAT3 _scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	XMFLOAT3 _rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 _forward = XMFLOAT3(1.0f, 0.0f, 0.0f);
 
 	Application* _pApp;
 	ID3D11VertexShader* _pVertexShader;
@@ -57,4 +58,8 @@ public:
 	void SetScale(XMFLOAT3 scale) { _scale = scale; }
 	XMFLOAT3 GetRotation() { return _rotation; }
 	void SetRotation(XMFLOAT3 rotation) { _rotation = rotation; }
+
+	void HandleInput();
+
+	void MakeForwardVector();
 };

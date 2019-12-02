@@ -20,11 +20,13 @@ enum CameraType
 
 class Camera
 {
-	XMFLOAT3 _eye = XMFLOAT3(0.0f, 0.0f, -30.0f);
+	XMFLOAT3 _eye = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	XMFLOAT3 _direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	XMFLOAT3 _up = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	XMFLOAT3 _right = XMFLOAT3(0.0f, 0.0f, 1.0f);
 	XMFLOAT3 _forward = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	XMFLOAT3 _offset = XMFLOAT3(-30.0f, 0.0f, 0.0f);
+
 	GameObject* _pTarget = nullptr;
 	XMFLOAT4X4 _viewMatrix;
 	XMFLOAT4X4 _projectionMatrix;
