@@ -38,8 +38,8 @@ class Camera
 	CameraType _camType = CT_FirstPerson;
 
 	float _fCameraSensitivity = 0.05f;
-	float _fInterpTime = 0.0f;
 	bool _bActive = true;
+	float _deltaTime = 0.0f;
 
 	void SetViewMatrix(); // done internally, not a setter
 	void UpdateVectors();
@@ -47,7 +47,7 @@ class Camera
 public:
 	Camera(CameraType camType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 
-	void Update();
+	void Update(float deltaTime);
 	void FirstPersonUpdate();
 	void ThirdPersonUpdate();
 	void Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);

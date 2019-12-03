@@ -29,7 +29,7 @@ void GameObject::MakeForwardVector()
 	_forward.z = sin(_rotation.y) * -1;
 }
 
-void GameObject::Update(XMMATRIX ParentWorld)
+void GameObject::Update(float deltaTime, XMMATRIX ParentWorld)
 {
 	XMVECTOR scale = XMLoadFloat3(&_scale);
 	XMVECTOR pos = XMLoadFloat3(&_position);
@@ -39,13 +39,13 @@ void GameObject::Update(XMMATRIX ParentWorld)
 	{
 		if (GetAsyncKeyState(0x41)) // A
 		{
-			_rotation.y -= 0.00025f * _pApp->GetTime();
+			_rotation.y -= 0.00025f * deltaTime;
 			rot = XMLoadFloat3(&_rotation);
 		}
 
 		if (GetAsyncKeyState(0x44)) // A
 		{
-			_rotation.y += 0.00025f * _pApp->GetTime();
+			_rotation.y += 0.00025f * deltaTime;
 			rot = XMLoadFloat3(&_rotation);
 		}
 
@@ -54,7 +54,7 @@ void GameObject::Update(XMMATRIX ParentWorld)
 
 		if (GetAsyncKeyState(0x57)) // W
 		{
-			pos += forward * 0.005 * _pApp->GetTime();
+			pos += forward * 0.005 * deltaTime;
 			XMStoreFloat3(&_position, pos);
 		}
 
@@ -65,7 +65,7 @@ void GameObject::Update(XMMATRIX ParentWorld)
 	if (_pChild != nullptr)
 	{
 		XMMATRIX world = XMLoadFloat4x4(&_world);
-		_pChild->Update(world);
+		_pChild->Update(deltaTime, world);
 	}
 }
 void GameObject::Draw()

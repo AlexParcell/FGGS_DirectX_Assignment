@@ -86,8 +86,6 @@ public:
 	void Update();
 	void Draw();
 
-	MeshData MakeGrid(int size);
-
 	ConstantBuffer* GetCurrentConstantBuffer() { return _pCurrentCB; }
 	ID3D11Buffer* GetConstantBuffer() { return _pConstantBuffer; }
 	ID3D11DeviceContext* GetImmediateContext() { return _pImmediateContext; }

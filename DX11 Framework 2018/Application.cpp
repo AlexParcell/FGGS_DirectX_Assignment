@@ -397,6 +397,7 @@ HRESULT Application::InitDevice()
 
 	// Set up cameras
 	_pFirstPersonCam = new Camera(CT_FirstPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pFirstPersonCam->SetTarget(Boat);
 
 	_pThirdPersonCam = new Camera(CT_ThirdPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
 	_pThirdPersonCam->SetTarget(Boat);
@@ -448,127 +449,6 @@ HRESULT Application::InitDevice()
     return S_OK;
 }
 
-// To do: figure out how this works
-MeshData Application::MakeGrid(int size)
-{
-	ID3D11Buffer* VertexBuffer;
-	ID3D11Buffer* IndexBuffer;
-	UINT IndexCount;
-	MeshData mesh;
-
-		HRESULT hr;
-
-		int dimension = 0;
-
-		if (size < 1)
-		{
-			dimension = 1;
-		}
-		else
-		{
-			dimension = size;
-		}
-
-		dimension++;
-
-		int vertexCount = (dimension + 1) * (dimension + 1);
-		int indexCount = 6 * (dimension * dimension);
-		int actualVertexCount = 0;
-		int actualIndexCount = 0;
-		SimpleVertex* vertices = new SimpleVertex[vertexCount];
-		WORD* indices = new WORD[indexCount];
-
-		for (int z = 0, index = 0; z < dimension; ++z)
-		{
-			for (int x = 0; x < dimension; ++x, ++index)
-			{
-				vertices[index].Pos = XMFLOAT3(x, 0.0f, z);
-				vertices[index].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
-				vertices[index].TexC = XMFLOAT2(2, 0);
-				actualVertexCount++;
-			}
-		}
-
-		for (int z = 0, index = 0; z < dimension - 1; ++z)
-		{
-			for (int x = 0; x < dimension - 1; ++x)
-			{
-				indices[index] = z * dimension + x;
-				if (vertices[indices[index]].TexC.x == 2)
-				{
-					vertices[indices[index]].TexC = XMFLOAT2(0.0f, 0.0f);
-				}
-				index++;
-
-				indices[index] = (z + 1) * dimension + x;
-				if (vertices[indices[index]].TexC.x == 2)
-				{
-					vertices[indices[index]].TexC = XMFLOAT2(1.0f, 0.0f);
-				}
-				index++;
-
-				indices[index] = (z + 1) * dimension + (x + 1);
-				if (vertices[indices[index]].TexC.x == 2)
-				{
-					vertices[indices[index]].TexC = XMFLOAT2(1.0f, 1.0f);
-				}
-				index++;
-
-				indices[index++] = z * dimension + x;
-
-				indices[index++] = (z + 1) * dimension + (x + 1);
-
-				indices[index] = z * dimension + (x + 1);
-				if (vertices[indices[index]].TexC.x == 2)
-				{
-					vertices[indices[index]].TexC = XMFLOAT2(0.0f, 1.0f);
-				}
-				index++;
-
-				actualIndexCount += 6;
-			}
-		}
-
-		D3D11_BUFFER_DESC vbd;
-		ZeroMemory(&vbd, sizeof(vbd));
-		vbd.Usage = D3D11_USAGE_DEFAULT;
-		vbd.ByteWidth = sizeof(SimpleVertex) * actualVertexCount;
-		vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		vbd.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA vInitData;
-		ZeroMemory(&vInitData, sizeof(vInitData));
-		vInitData.pSysMem = vertices;
-
-		hr = _pd3dDevice->CreateBuffer(&vbd, &vInitData, &VertexBuffer);
-
-		delete[] vertices;
-
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(WORD) * actualIndexCount;
-		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA InitData;
-		ZeroMemory(&InitData, sizeof(InitData));
-		InitData.pSysMem = indices;
-		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &IndexBuffer);
-
-		delete[] indices;
-
-
-	mesh.VertexBuffer = VertexBuffer;
-	mesh.IndexBuffer = IndexBuffer;
-	mesh.IndexCount = actualIndexCount;
-	mesh.VBOffset = 0;
-	mesh.VBStride = sizeof(SimpleVertex);
-
-	return mesh;
-}
-
 void Application::Cleanup()
 {
 	delete _pFirstPersonCam;
@@ -616,9 +496,9 @@ void Application::Update()
     // Animate the cube
     //
 	Skybox->SetPosition(_pActiveCam->GetEye());
-	Skybox->Update();
-	Water->Update();
-	Boat->Update();
+	Skybox->Update(t);
+	Water->Update(t);
+	Boat->Update(t);
 
 	if (GetAsyncKeyState(VK_F1))
 	{
@@ -643,7 +523,7 @@ void Application::Update()
 		_pActiveCam = _pThirdPersonCam;
 	}
 
-	_pActiveCam->Update();
+	_pActiveCam->Update(t);
 	_view = _pActiveCam->GetViewMatrix();
 
 	_fTime = t;

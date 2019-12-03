@@ -38,7 +38,7 @@ public:
 	~GameObject();
 
 	void Draw();
-	void Update(XMMATRIX WorldVector = XMMatrixIdentity());
+	void Update(float deltaTime, XMMATRIX WorldVector = XMMatrixIdentity());
 
 	void SetVertexShader(ID3D11VertexShader* vs) { _pVertexShader = vs; }
 	void SetPixelShader(ID3D11PixelShader* ps) { _pPixelShader = ps; }
@@ -58,8 +58,6 @@ public:
 	void SetScale(XMFLOAT3 scale) { _scale = scale; }
 	XMFLOAT3 GetRotation() { return _rotation; }
 	void SetRotation(XMFLOAT3 rotation) { _rotation = rotation; }
-
-	void HandleInput();
 
 	void MakeForwardVector();
 };

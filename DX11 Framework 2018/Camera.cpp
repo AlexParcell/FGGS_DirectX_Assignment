@@ -14,8 +14,9 @@ Camera::Camera(CameraType camType, FLOAT windowWidth, FLOAT windowHeight, FLOAT 
 	Reshape(_windowWidth, _windowHeight, _nearDepth, _farDepth);
 }
 
-void Camera::Update()
+void Camera::Update(float deltaTime)
 {
+	_deltaTime = deltaTime;
 	switch (_camType)
 	{
 		case (CT_FirstPerson):
@@ -37,79 +38,42 @@ void Camera::Update()
 // https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 void Camera::FirstPersonUpdate()
 {
+	_eye.x = _pTarget->GetPosition().x;
+	_eye.z = _pTarget->GetPosition().z;
+	_eye.y = _pTarget->GetPosition().y + 4.0f;
+
 	XMVECTOR up = XMLoadFloat3(&_up);
-	XMVECTOR eye = XMLoadFloat3(&_eye);
 	XMVECTOR direction = XMLoadFloat3(&_direction);
 	XMVECTOR right = XMLoadFloat3(&_right);
-	XMVECTOR forward = XMLoadFloat3(&_forward);
-
-	if (GetAsyncKeyState(0x57)) // W
-	{
-		XMVECTOR increment = up * _fCameraSensitivity;
-		eye += increment;
-		direction += increment;
-	}
-
-	if (GetAsyncKeyState(0x53)) // S
-	{
-		XMVECTOR increment = up * _fCameraSensitivity;
-		eye -= increment;
-		direction -= increment;
-	}
-
-	if (GetAsyncKeyState(0x41)) // A
-	{
-		XMVECTOR increment = right * _fCameraSensitivity;
-		eye -= increment;
-		direction -= increment;
-	}
-
-	if (GetAsyncKeyState(0x44)) // D
-	{
-		XMVECTOR increment = right * _fCameraSensitivity;
-		eye += increment;
-		direction += increment;
-	}
-
-	if (GetAsyncKeyState(0x50)) // P
-	{
-		XMVECTOR increment = forward * _fCameraSensitivity;
-		eye += increment;
-		direction += increment;
-	}
-
-	if (GetAsyncKeyState(0x4F)) // O
-	{
-		XMVECTOR increment = forward * _fCameraSensitivity;
-		eye -= increment;
-		direction -= increment;
-	}
+	XMVECTOR eye = XMLoadFloat3(&_eye);
+	XMVECTOR offset = XMLoadFloat3(&_offset);
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		direction += (up * _fCameraSensitivity);
+		offset += (up * _fCameraSensitivity * _deltaTime);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		direction -= (up * _fCameraSensitivity);
-	}
-
-	if (GetAsyncKeyState(VK_LEFT))
-	{
-		direction -= (right * _fCameraSensitivity);
+		offset -= (up * _fCameraSensitivity * _deltaTime);
 	}
 
 	if (GetAsyncKeyState(VK_RIGHT))
 	{
-		direction += (right * _fCameraSensitivity);
+		offset += (right * _fCameraSensitivity * _deltaTime);
 	}
 
-	XMStoreFloat3(&_up, up);
-	XMStoreFloat3(&_eye, eye);
-	XMStoreFloat3(&_right, right);
-	XMStoreFloat3(&_direction, direction);
-	XMStoreFloat3(&_forward, forward);
+	if (GetAsyncKeyState(VK_LEFT))
+	{
+		offset -= (right * _fCameraSensitivity * _deltaTime);
+	}
+
+	XMStoreFloat3(&_offset, offset);
+
+	XMFLOAT3 target = _pTarget->GetPosition();
+	_direction.x = target.x + _offset.x;
+	_direction.y = _offset.y;
+	_direction.z = target.z + _offset.z;
 }
 
 void Camera::ThirdPersonUpdate()
@@ -122,32 +86,32 @@ void Camera::ThirdPersonUpdate()
 
 	if (GetAsyncKeyState(0x50)) // P
 	{
-		offset += forward * _fCameraSensitivity;
+		offset += forward * _fCameraSensitivity * _deltaTime;
 	}
 
 	if (GetAsyncKeyState(0x4F)) // O
 	{
-		offset -= forward * _fCameraSensitivity;
+		offset -= forward * _fCameraSensitivity * _deltaTime;
 	}
 
 	if (GetAsyncKeyState(VK_UP))
 	{
-		offset += (up * _fCameraSensitivity);
+		offset += (up * _fCameraSensitivity * _deltaTime);
 	}
 
 	if (GetAsyncKeyState(VK_DOWN))
 	{
-		offset -= (up * _fCameraSensitivity);
+		offset -= (up * _fCameraSensitivity * _deltaTime);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))
 	{
-		offset -= (right * _fCameraSensitivity);
+		offset -= (right * _fCameraSensitivity * _deltaTime);
 	}
 
 	if (GetAsyncKeyState(VK_RIGHT))
 	{
-		offset += (right * _fCameraSensitivity);
+		offset += (right * _fCameraSensitivity * _deltaTime);
 	}
 
 	XMStoreFloat3(&_offset, offset);
@@ -166,7 +130,19 @@ void Camera::SetViewMatrix()
 	XMVECTOR up = XMLoadFloat3(&_up);
 	XMMATRIX viewMatrix;
 
-	viewMatrix = XMMatrixLookAtLH(eye, direction, up);
+	switch (_camType)
+	{
+		case (CT_FirstPerson):
+		{
+			viewMatrix = XMMatrixLookAtLH(eye, direction, up);
+		}
+		break;
+		case (CT_ThirdPerson):
+		{
+			viewMatrix = XMMatrixLookAtLH(eye, direction, up);
+		}
+		break;
+	}
 
 	XMStoreFloat4x4(&_viewMatrix, viewMatrix);
 }
