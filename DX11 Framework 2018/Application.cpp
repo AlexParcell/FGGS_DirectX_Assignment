@@ -379,7 +379,7 @@ HRESULT Application::InitDevice()
 	Skybox->SetVertexShader(_pSkyboxVS);
 	Skybox->SetPixelShader(_pSkyboxPS);
 
-	MeshData grid = MakeGrid(10);
+	MeshData grid = OBJLoader::Load("Plane.obj", _pd3dDevice, false);
 	Water = new GameObject(grid, this, L"Water_COLOR.dds");
 	Water->SetScale(XMFLOAT3(100.0f, 1.0f, 100.0f));
 	Water->SetPosition(XMFLOAT3(-500.0f, -5.0f, -500.0f));

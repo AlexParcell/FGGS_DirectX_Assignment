@@ -54,7 +54,7 @@ void GameObject::Update(XMMATRIX ParentWorld)
 
 		if (GetAsyncKeyState(0x57)) // W
 		{
-			pos += forward * 0.01 * _pApp->GetTime();
+			pos += forward * 0.005 * _pApp->GetTime();
 			XMStoreFloat3(&_position, pos);
 		}
 
