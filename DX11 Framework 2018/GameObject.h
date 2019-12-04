@@ -30,20 +30,16 @@ public:
 
 	bool _bHasSpecular = false;
 	bool _bIsChild = false;
-	bool _bAffectedByWaves = false;
 
 public:
-
 	GameObject(MeshData mesh, Application* app, wchar_t* textureName);
 	~GameObject();
 
 	void Draw();
-	void Update(float deltaTime, XMMATRIX WorldVector = XMMatrixIdentity());
+	virtual void Update(float deltaTime, XMMATRIX WorldVector = XMMatrixIdentity());
 
 	void SetVertexShader(ID3D11VertexShader* vs) { _pVertexShader = vs; }
 	void SetPixelShader(ID3D11PixelShader* ps) { _pPixelShader = ps; }
-
-	void SetAffectedByWaves(bool val) { _bAffectedByWaves = true; }
 
 	void SetSpecularMap(wchar_t* specMapName);
 

@@ -83,15 +83,7 @@ float4 PS(VS_OUTPUT input) : SV_Target
 	float4 ambient = (AmbientLight * AmbientMtrl);
 	float4 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight);
 
-	float4 specular;
-	if (HasSpecular)
-	{
-		specular = (specularAmount * (specularColour * SpecularLight));
-	}
-	else
-	{
-		specular = (specularAmount * (SpecularMtrl * SpecularLight));
-	}
+	float4 specular = (specularAmount * (SpecularMtrl * SpecularLight));
 
 	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
 
@@ -132,7 +124,10 @@ float4 SkyboxPS(VS_OUTPUT input) : SV_Target
 VS_OUTPUT WaterVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
-	Pos.y += (clamp(Pos.x % 3, 0.0f, 0.5f) + clamp(Pos.y % 3, 0.0f, 0.5f)) * 2.0f * sin(gTime);
+	Pos.y += 0.5f * sin(Pos.x) * sin(3.0f * gTime);
+	Normal.y += 0.5f * sin(Normal.x) * sin(3.0f * gTime);
+
+	// Modify normals to reflect movement of position
 
 	output.Pos = mul(Pos, World);
 
@@ -170,15 +165,7 @@ float4 WaterPS(VS_OUTPUT input) : SV_Target
 	float4 ambient = (AmbientLight * AmbientMtrl);
 	float4 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight);
 
-	float4 specular;
-	if (HasSpecular)
-	{
-		specular = (specularAmount * (specularColour * SpecularLight));
-	}
-	else
-	{
-		specular = (specularAmount * (SpecularMtrl * SpecularLight));
-	}
+	float4 specular = (specularAmount * (SpecularMtrl * SpecularLight));
 
 	// This enables tiling (200 tiles per plane) and also does a scrolling effect to make the water look more fluid
 	float2 newTexCoord = float2(input.TexCoord.x * 200 + (sin(gTime) * 0.3), input.TexCoord.y * 200 + (sin(gTime) * 0.3));

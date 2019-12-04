@@ -1,4 +1,7 @@
 #include "Application.h"
+#include "PlayableObject.h"
+#include "FirstPersonCamera.h"
+#include "ThirdPersonCamera.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -243,6 +246,62 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
     return S_OK;
 }
 
+void Application::LoadObjects()
+{
+	std::fstream jsonfile("Level.json"); // opening file
+	nlohmann::json json1; // making JSON object
+	jsonfile >> json1; // reading JSON file to object
+	jsonfile.close(); // closing file
+	nlohmann::json array = json1["Objects"];
+
+	for (int i = 0; i < array.size(); i++)
+	{
+		// Get texture and mesh names
+		std::string TempMeshName = array[i]["Mesh"].get<std::string>().c_str();
+		char* MeshName = (char*) (TempMeshName.c_str());
+		std::string TempTextName = (array[i]["Texture"].get<std::string>().c_str());
+		std::wstring wTempTextName = std::wstring(TempTextName.begin(), TempTextName.end());
+		wchar_t* TextureName = (wchar_t*)(wTempTextName.c_str());
+
+		// Get transform
+		XMFLOAT3 Position = XMFLOAT3(array[i]["Position"]["x"], array[i]["Position"]["y"], array[i]["Position"]["z"]);
+		XMFLOAT3 Scale = XMFLOAT3(array[i]["Scale"]["x"], array[i]["Scale"]["y"], array[i]["Scale"]["z"]);
+		XMFLOAT3 Rotation = XMFLOAT3(array[i]["Rotation"]["x"], array[i]["Rotation"]["y"], array[i]["Rotation"]["z"]);
+
+		// Get mesh
+		MeshData mesh = OBJLoader::Load(MeshName, _pd3dDevice);
+
+		std::string Tag = array[i]["Tag"].get<std::string>();
+		if (Tag == "Skybox")
+		{
+			Skybox = new GameObject(mesh, this, TextureName);
+			Skybox->SetPosition(Position);
+			Skybox->SetScale(Scale);
+			Skybox->SetRotation(Rotation);
+			Skybox->SetVertexShader(_pSkyboxVS);
+			Skybox->SetPixelShader(_pSkyboxPS);
+		}
+		else if (Tag == "Boat")
+		{
+			Boat = new PlayableObject(mesh, this, TextureName);
+			Boat->SetPosition(Position);
+			Boat->SetScale(Scale);
+			Boat->SetRotation(Rotation);
+			Boat->SetVertexShader(_pVertexShader);
+			Boat->SetPixelShader(_pPixelShader);
+		}
+		else if (Tag == "Water")
+		{
+			Water = new GameObject(mesh, this, TextureName);
+			Water->SetPosition(Position);
+			Water->SetScale(Scale);
+			Water->SetRotation(Rotation);
+			Water->SetVertexShader(_pWaterVS);
+			Water->SetPixelShader(_pWaterPS);
+		}
+	}
+}
+
 HRESULT Application::CompileShaderFromFile(WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
 {
     HRESULT hr = S_OK;
@@ -373,35 +432,23 @@ HRESULT Application::InitDevice()
 
 	InitShadersAndInputLayout();
 
-	MeshData sphere = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
-	Skybox = new GameObject(sphere, this, L"Skybox.dds");
-	Skybox->SetScale(XMFLOAT3(-300.0f, -300.0f, -300.0f));
-	Skybox->SetVertexShader(_pSkyboxVS);
-	Skybox->SetPixelShader(_pSkyboxPS);
-
-	MeshData grid = OBJLoader::Load("Plane.obj", _pd3dDevice, false);
-	Water = new GameObject(grid, this, L"Water_COLOR.dds");
-	Water->SetScale(XMFLOAT3(100.0f, 1.0f, 100.0f));
-	Water->SetPosition(XMFLOAT3(-500.0f, -5.0f, -500.0f));
-	Water->SetVertexShader(_pWaterVS);
-	Water->SetPixelShader(_pWaterPS);
-
-	
-	MeshData boat = OBJLoader::Load("Boat.obj", _pd3dDevice);
-	Boat = new GameObject(boat, this, L"Boat_COLOR.dds");
-	Boat->SetPixelShader(_pPixelShader);
-	Boat->SetVertexShader(_pVertexShader);
-	Boat->SetPosition(XMFLOAT3(0.0f, -4.5f, 0.0f));
-	Boat->SetScale(XMFLOAT3(0.5f, 0.5f, 0.5f));
-	Boat->SetAffectedByWaves(true);
+	LoadObjects();
 
 	// Set up cameras
-	_pFirstPersonCam = new Camera(CT_FirstPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pFirstPersonCam = new FirstPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
 	_pFirstPersonCam->SetTarget(Boat);
 
-	_pThirdPersonCam = new Camera(CT_ThirdPerson, _WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pThirdPersonCam = new ThirdPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
 	_pThirdPersonCam->SetTarget(Boat);
-	_pActiveCam = _pThirdPersonCam;
+	_pActiveCam = (Camera*) _pThirdPersonCam;
+
+	_pTopDownCam = new Camera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pTopDownCam->SetDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	_pTopDownCam->SetEye(XMFLOAT3(10.0f, 100.0f, 0.0f));
+
+	_pFixedViewCam = new Camera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pFixedViewCam->SetDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	_pFixedViewCam->SetEye(XMFLOAT3(100.0f, 50.0f, 0.0f));
 
 	// Initialize the view matrix
 	_view = _pActiveCam->GetViewMatrix();
@@ -453,7 +500,6 @@ void Application::Cleanup()
 {
 	delete _pFirstPersonCam;
 	delete _pThirdPersonCam;
-	delete _pPathCam;
 	
     if (_pImmediateContext) _pImmediateContext->ClearState();
 
@@ -477,28 +523,23 @@ void Application::Update()
     // Update our time
     static float t = 0.0f;
 
-    if (_driverType == D3D_DRIVER_TYPE_REFERENCE)
-    {
-		t += (float)XM_PI * 0.0125f;
-    }
-    else
-    {
-        static DWORD dwTimeStart = 0;
-        DWORD dwTimeCur = GetTickCount();
+	static DWORD dwTimeStart = 0;
+	DWORD dwTimeCur = GetTickCount64();
 
-        if (dwTimeStart == 0)
-            dwTimeStart = dwTimeCur;
+	if (dwTimeStart == 0)
+		dwTimeStart = dwTimeCur;
 
-        t = (dwTimeCur - dwTimeStart) / 1000.0f;
-    }
+	float deltaTime = ((dwTimeCur - dwTimeStart) / 1000.0f) - t;
+
+	t = (dwTimeCur - dwTimeStart) / 1000.0f;
 
     //
     // Animate the cube
     //
 	Skybox->SetPosition(_pActiveCam->GetEye());
-	Skybox->Update(t);
-	Water->Update(t);
-	Boat->Update(t);
+	Skybox->Update(deltaTime);
+	Water->Update(deltaTime);
+	Boat->Update(deltaTime);
 
 	if (GetAsyncKeyState(VK_F1))
 	{
@@ -523,11 +564,21 @@ void Application::Update()
 		_pActiveCam = _pThirdPersonCam;
 	}
 
-	_pActiveCam->Update(t);
+	if (GetAsyncKeyState(0x33)) // 1
+	{
+		_pActiveCam = _pTopDownCam;
+	}
+
+	if (GetAsyncKeyState(0x34)) // 2
+	{
+		_pActiveCam = _pFixedViewCam;
+	}
+
+	_pActiveCam->Update(deltaTime);
 	_view = _pActiveCam->GetViewMatrix();
 
 	_fTime = t;
-	_pLight->eyePosW = _pActiveCam->GetDirection();
+	_pLight->eyePosW = _pActiveCam->GetEye();
 }
 
 void Application::Draw()
@@ -553,7 +604,7 @@ void Application::Draw()
 	cb.specularMaterial = _pLight->specularMaterial;
 	cb.specularLight = _pLight->specularLight;
 	cb.specularPower = _pLight->specularPower;
-	cb.eyePosW = _pLight->eyePosW;
+	cb.eyePosW = _pActiveCam->GetEye();
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 

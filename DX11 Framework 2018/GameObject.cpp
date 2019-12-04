@@ -35,31 +35,6 @@ void GameObject::Update(float deltaTime, XMMATRIX ParentWorld)
 	XMVECTOR pos = XMLoadFloat3(&_position);
 	XMVECTOR rot = XMLoadFloat3(&_rotation);
 
-	if (_bAffectedByWaves)
-	{
-		if (GetAsyncKeyState(0x41)) // A
-		{
-			_rotation.y -= 0.00025f * deltaTime;
-			rot = XMLoadFloat3(&_rotation);
-		}
-
-		if (GetAsyncKeyState(0x44)) // A
-		{
-			_rotation.y += 0.00025f * deltaTime;
-			rot = XMLoadFloat3(&_rotation);
-		}
-
-		MakeForwardVector();
-		XMVECTOR forward = XMVector3Normalize(XMLoadFloat3(&_forward));
-
-		if (GetAsyncKeyState(0x57)) // W
-		{
-			pos += forward * 0.005 * deltaTime;
-			XMStoreFloat3(&_position, pos);
-		}
-
-	}
-
 	XMStoreFloat4x4(&_world, XMMatrixScalingFromVector(scale) * XMMatrixRotationRollPitchYawFromVector(rot) * XMMatrixTranslationFromVector(pos) * ParentWorld);
 
 	if (_pChild != nullptr)

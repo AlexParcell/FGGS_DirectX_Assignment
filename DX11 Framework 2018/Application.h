@@ -12,15 +12,24 @@
 #include "GameObject.h"
 #include "Camera.h"
 #include "Structures.h"
+#include "JSON.hpp"
 
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <string>
 
 #define GRID_SIZE 5
 
 using namespace DirectX;
 using namespace std;
+
+class PlayableObject;
+class FirstPersonCamera;
+class ThirdPersonCamera;
 
 class Application
 {
@@ -51,9 +60,10 @@ private:
 	ID3D11RasterizerState*	_pFillMode = nullptr;
 	ID3D11SamplerState*		_pSamplerLinear = nullptr;
 
-	Camera* _pFirstPersonCam = nullptr;
-	Camera* _pThirdPersonCam = nullptr;
-	Camera* _pPathCam = nullptr;
+	FirstPersonCamera* _pFirstPersonCam = nullptr;
+	ThirdPersonCamera* _pThirdPersonCam = nullptr;
+	Camera* _pTopDownCam = nullptr;
+	Camera* _pFixedViewCam = nullptr;
 	Camera* _pActiveCam = nullptr;
 
 	LightingData* _pLight = nullptr;
@@ -61,7 +71,7 @@ private:
 
 	GameObject* Skybox = nullptr;
 	GameObject* Water = nullptr;
-	GameObject* Boat = nullptr;
+	PlayableObject* Boat = nullptr;
 	vector<GameObject*> _pCubes;
 
 	bool _bWireframe = false;
@@ -91,6 +101,10 @@ public:
 	ID3D11DeviceContext* GetImmediateContext() { return _pImmediateContext; }
 	ID3D11Device* GetDevice() {	return _pd3dDevice; }
 	float GetTime() { return _fTime; }
+
+	void LoadObjects();
+	wchar_t* Application::StringToWCHAR_T(std::string string);
+	char* Application::StringToCHAR(std::string string);
 
 	XMFLOAT4X4* GetViewMatrix() { return &_view; }
 };

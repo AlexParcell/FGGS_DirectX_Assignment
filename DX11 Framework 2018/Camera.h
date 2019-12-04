@@ -12,14 +12,9 @@
 class Application;
 class GameObject;
 
-enum CameraType
-{
-	CT_FirstPerson = 0,
-	CT_ThirdPerson,
-};
-
 class Camera
 {
+protected:
 	XMFLOAT3 _eye = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	XMFLOAT3 _direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
 	XMFLOAT3 _up = XMFLOAT3(0.0f, 1.0f, 0.0f);
@@ -35,19 +30,16 @@ class Camera
 	FLOAT _nearDepth;
 	FLOAT _farDepth;
 
-	CameraType _camType = CT_FirstPerson;
-
-	float _fCameraSensitivity = 0.05f;
+	float _fCameraSensitivity = 30.0f;
 	bool _bActive = true;
-	float _deltaTime = 0.0f;
 
 	void SetViewMatrix(); // done internally, not a setter
 	void UpdateVectors();
 
 public:
-	Camera(CameraType camType, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
+	Camera(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 
-	void Update(float deltaTime);
+	virtual void Update(float deltaTime);
 	void FirstPersonUpdate();
 	void ThirdPersonUpdate();
 	void Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
@@ -63,5 +55,6 @@ public:
 	XMFLOAT3 GetForward() { return _forward; }
 
 	void SetTarget(GameObject* Target) { _pTarget = Target; }
-	void SetCameraType(CameraType type) { _camType = type; }
+	void SetEye(XMFLOAT3 eye) { _eye = eye; }
+	void SetDirection(XMFLOAT3 direction) { _direction = direction; }
 };
