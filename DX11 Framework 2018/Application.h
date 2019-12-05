@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <string>
 
-#define GRID_SIZE 5
+#define LIGHTCOUNT 8
 
 using namespace DirectX;
 using namespace std;
@@ -76,6 +76,8 @@ private:
 
 	bool _bWireframe = false;
 	float _fTime = 0.0f;
+
+	Light lights[LIGHTCOUNT];
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);

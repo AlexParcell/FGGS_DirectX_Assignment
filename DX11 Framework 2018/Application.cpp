@@ -450,6 +450,11 @@ HRESULT Application::InitDevice()
 	_pFixedViewCam->SetDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	_pFixedViewCam->SetEye(XMFLOAT3(100.0f, 50.0f, 0.0f));
 
+	Light light;
+	light.Enabled = true;
+	light.Type = DIRECTIONAL_LIGHT;
+	lights[0] = light;
+
 	// Initialize the view matrix
 	_view = _pActiveCam->GetViewMatrix();
 
@@ -605,6 +610,11 @@ void Application::Draw()
 	cb.specularLight = _pLight->specularLight;
 	cb.specularPower = _pLight->specularPower;
 	cb.eyePosW = _pActiveCam->GetEye();
+	for (int i = 0; i < LIGHTCOUNT; i++)
+	{
+		if (lights[i].Enabled)
+			cb.lights[i] = lights[i];
+	}
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 

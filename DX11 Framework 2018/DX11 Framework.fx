@@ -7,6 +7,21 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
+
+#define LIGHTCOUNT 8
+#define POINT_LIGHT 0
+#define DIRECTIONAL_LIGHT 1
+
+struct Light
+{
+	float3 Pos; // 12
+	bool Enabled; // 4
+	float3 Direction; // 12
+	int LightType; // 4
+	float3 Color; // 12
+	float Padding;
+};
+
 cbuffer ConstantBuffer : register( b0 )
 {
 	matrix World;
@@ -22,11 +37,10 @@ cbuffer ConstantBuffer : register( b0 )
 	float4 SpecularLight;
 	float SpecularPower;
 	float3 EyePosW;
-	bool HasSpecular;
+	Light Lights[LIGHTCOUNT];
 }
 
 Texture2D txDiffuse : register(t0);
-Texture2D txSpecular : register(t1);
 SamplerState samLinear : register(s0);
 
 //--------------------------------------------------------------------------------------
@@ -38,17 +52,22 @@ struct VS_OUTPUT
 	float2 TexCoord : TEXCOORD0;
 };
 
-float4 GetSpecular(float3 Normal, float3 WorldPosition)
+struct Lighting
 {
-	float3 toEye = normalize(EyePosW - WorldPosition);
-	float3 reflection = reflect(mul(LightVecW, -1.0), Normal);
-	float specularAmount = pow(max(dot(reflection, toEye), 0.0f), SpecularPower);
+	float4 diffuse;
+	float4 specular;
+};
+
+float4 GetSpecular(float3 ToEye, float3 LightDirection, float3 Normal)
+{
+	float3 reflection = reflect(mul(LightDirection, -1.0), Normal); // Reflection of light against surface, about normal
+	float specularAmount = pow(max(dot(reflection, ToEye), 0.0f), SpecularPower);
 	return (specularAmount * (SpecularMtrl * SpecularLight));
 }
 
-float4 GetDiffuse(float3 Normal)
+float4 GetDiffuse(float3 LightDirection, float3 Normal)
 {
-	float diffuseAmount = max(dot(LightVecW, Normal), 0.0f);
+	float diffuseAmount = max(dot(LightDirection, Normal), 0.0f);
 	return diffuseAmount * (DiffuseMtrl * DiffuseLight);
 }
 
@@ -57,9 +76,66 @@ float4 GetAmbient()
 	return AmbientLight * AmbientMtrl;
 }
 
-//--------------------------------------------------------------------------------------
-// Vertex Shader
-//--------------------------------------------------------------------------------------
+float GetAttenuation(Light light, float Distance)
+{
+	return 1.0f / (0.7f + (0.1f * Distance) + (0.01f * Distance * Distance));
+}
+
+// Big directional light, works like the sun
+Lighting GetDirectionalLight(Light light, float3 ToEye, float3 WorldPosition, float3 Normal)
+{
+	float3 LightDirection = light.Direction * -1;
+
+	Lighting result;
+	result.diffuse = GetDiffuse(LightDirection, Normal);
+	result.specular = GetSpecular(ToEye, LightDirection, Normal);
+	return result;
+}
+
+// A little point of light
+Lighting GetPointLight(Light light, float3 ToEye, float3 WorldPosition, float3 Normal)
+{
+	float3 LightDirection = (light.Pos - WorldPosition);
+	float3 Distance = length(LightDirection);
+	LightDirection = normalize(LightDirection);
+	
+	float Attenuation = GetAttenuation(light, Distance);
+
+	Lighting result;
+	result.diffuse = GetDiffuse(LightDirection, Normal) * Attenuation;
+	result.specular = GetSpecular(ToEye, LightDirection, Normal) * Attenuation;
+	return result;
+}
+
+Lighting ProcessLighting(float3 WorldPosition, float3 Normal)
+{
+	float3 ToEye = normalize(EyePosW - WorldPosition); // Vector from point we want to shade to eye
+
+	Lighting FinalResult;
+
+	for (int i = 0; i < LIGHTCOUNT; i++)
+	{
+		Lighting Result;
+
+		switch (Lights[i].LightType)
+		{
+		case POINT_LIGHT:
+			Result = GetPointLight(Lights[i], ToEye, WorldPosition, Normal);
+			break;
+		case DIRECTIONAL_LIGHT:
+			Result = GetDirectionalLight(Lights[i], ToEye, WorldPosition, Normal);
+			break;
+		}
+
+		FinalResult.diffuse += Result.diffuse;
+		FinalResult.specular += Result.specular;
+	}
+
+	return FinalResult;
+}
+
+// Default shaders
+
 VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0 )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
@@ -79,25 +155,18 @@ VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : T
     return output;
 }
 
-//--------------------------------------------------------------------------------------
-// Pixel Shader
-//--------------------------------------------------------------------------------------
 float4 PS(VS_OUTPUT input) : SV_Target
 {
 	float4 Color;
 
-	float3 Normal = normalize(input.Normal);
+	float3 normal = normalize(input.Normal);
 
 	float4 ambient = GetAmbient();
-	float4 diffuse = GetDiffuse(Normal);
-	float4 specular = GetSpecular(Normal, input.PosW);
+	Lighting finalLight = ProcessLighting(input.PosW, normal);
 
 	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
 
-	Color.rgb = textureColour.rgb * (ambient.rgb + diffuse.rgb + specular.rgb);
-	Color.a = DiffuseMtrl.a;
-
-	return Color;
+	return float4(textureColour.rgb * (ambient.rgb + finalLight.diffuse.rgb + finalLight.specular.rgb), DiffuseMtrl.a);
 }
 
 // SKYBOX SHADERS
@@ -127,6 +196,8 @@ float4 SkyboxPS(VS_OUTPUT input) : SV_Target
 	return lerp(white, color, clamp(input.PosW.y / 300 + 0.3, 0, 1)); // divide by the scale (300) to get between 0 and 1, add 0.3 to define gradient start
 }
 
+// WATER SHADERS
+
 VS_OUTPUT WaterVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
@@ -151,20 +222,14 @@ VS_OUTPUT WaterVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord
 
 float4 WaterPS(VS_OUTPUT input) : SV_Target
 {
-	float4 Color;
-
-	float3 Normal = normalize(input.Normal);
+	float3 normal = normalize(input.Normal);
 
 	float4 ambient = GetAmbient();
-	float4 diffuse = GetDiffuse(Normal);
-	float4 specular = GetSpecular(Normal, input.PosW);
+	Lighting finalLight = ProcessLighting(input.PosW, normal);
 
 	// This enables tiling (200 tiles per plane) and also does a scrolling effect to make the water look more fluid
 	float2 newTexCoord = float2(input.TexCoord.x * 200 + (sin(gTime) * 0.3), input.TexCoord.y * 200 + (sin(gTime) * 0.3));
 	float4 textureColour = txDiffuse.Sample(samLinear, newTexCoord);
 
-	Color.rgb = textureColour.rgb * (ambient.rgb + diffuse.rgb + specular.rgb);
-	Color.a = DiffuseMtrl.a;
-
-	return Color;
+	return float4(textureColour.rgb * (ambient.rgb + finalLight.diffuse.rgb + finalLight.specular.rgb), DiffuseMtrl.a);
 }

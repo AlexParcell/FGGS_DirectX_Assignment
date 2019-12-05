@@ -9,6 +9,22 @@
 
 using namespace DirectX;
 
+enum LightType
+{
+	POINT_LIGHT = 0,
+	DIRECTIONAL_LIGHT
+};
+
+struct Light
+{
+	XMFLOAT3 Position = XMFLOAT3(0.0f, 10000.0f, 0.0f);
+	bool Enabled = false;
+	XMFLOAT3 Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
+	LightType Type = POINT_LIGHT;
+	XMFLOAT3 Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	float Padding;
+};
+
 struct LightingData
 {
 	XMFLOAT3 lightDirection = XMFLOAT3(0.0f, 1.0f, 0.0f); // Light direction from surface (XYZ)
@@ -43,5 +59,5 @@ struct ConstantBuffer
 	XMFLOAT4 specularLight;
 	float specularPower;
 	XMFLOAT3 eyePosW;
-	bool hasSpecular;
+	Light lights[8];
 };

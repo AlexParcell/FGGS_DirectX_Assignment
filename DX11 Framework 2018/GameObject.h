@@ -26,9 +26,7 @@ public:
 	ID3D11PixelShader* _pPixelShader;
 	GameObject* _pChild = nullptr;
 	ID3D11ShaderResourceView* _pTexture = nullptr;
-	ID3D11ShaderResourceView* _pSpecMap = nullptr;
 
-	bool _bHasSpecular = false;
 	bool _bIsChild = false;
 
 public:
@@ -40,8 +38,6 @@ public:
 
 	void SetVertexShader(ID3D11VertexShader* vs) { _pVertexShader = vs; }
 	void SetPixelShader(ID3D11PixelShader* ps) { _pPixelShader = ps; }
-
-	void SetSpecularMap(wchar_t* specMapName);
 
 	void SetChild(GameObject* child) { _pChild = child; }
 	void SetIsChild(bool val) { _bIsChild = val; }

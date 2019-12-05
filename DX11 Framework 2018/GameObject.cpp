@@ -12,14 +12,7 @@ GameObject::GameObject(MeshData mesh, Application* app, wchar_t* textureName)
 GameObject::~GameObject()
 {
 	_pTexture->Release();
-	if (_pSpecMap != nullptr)
-		_pSpecMap->Release();
 	delete _pChild;
-}
-
-void GameObject::SetSpecularMap(wchar_t* specMapName)
-{
-	CreateDDSTextureFromFile(_pApp->GetDevice(), specMapName, nullptr, &_pSpecMap);
 }
 
 void GameObject::MakeForwardVector()
@@ -50,12 +43,9 @@ void GameObject::Draw()
 	ID3D11DeviceContext* immediateContext = _pApp->GetImmediateContext();
 
 	immediateContext->PSSetShaderResources(0, 1, &_pTexture);
-	if (_bHasSpecular)
-		immediateContext->PSSetShaderResources(1, 1, &_pSpecMap);
 
 	XMMATRIX world = XMLoadFloat4x4(&_world);
 	cb->mWorld = XMMatrixTranspose(world);
-	cb->hasSpecular = _bHasSpecular;
 	immediateContext->UpdateSubresource(constantBuffer, 0, nullptr, cb, 0, 0);
 
 	immediateContext->VSSetShader(_pVertexShader, nullptr, 0);
