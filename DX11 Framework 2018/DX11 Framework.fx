@@ -38,16 +38,35 @@ struct VS_OUTPUT
 	float2 TexCoord : TEXCOORD0;
 };
 
+float4 GetSpecular(float3 Normal, float3 WorldPosition)
+{
+	float3 toEye = normalize(EyePosW - WorldPosition);
+	float3 reflection = reflect(mul(LightVecW, -1.0), Normal);
+	float specularAmount = pow(max(dot(reflection, toEye), 0.0f), SpecularPower);
+	return (specularAmount * (SpecularMtrl * SpecularLight));
+}
+
+float4 GetDiffuse(float3 Normal)
+{
+	float diffuseAmount = max(dot(LightVecW, Normal), 0.0f);
+	return diffuseAmount * (DiffuseMtrl * DiffuseLight);
+}
+
+float4 GetAmbient()
+{
+	return AmbientLight * AmbientMtrl;
+}
+
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
 VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0 )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
-    output.Pos = mul(Pos, World);
-
+	
+	// Do World, View, Projection Transformation on Position of Vertex
+	output.Pos = mul(Pos, World);
 	output.PosW = output.Pos.xyz;
-
     output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
 
@@ -69,21 +88,9 @@ float4 PS(VS_OUTPUT input) : SV_Target
 
 	float3 Normal = normalize(input.Normal);
 
-	float3 toEye = normalize(EyePosW - input.PosW);
-
-	float3 reflection = reflect(mul(LightVecW, -1.0), Normal);
-
-	// Compute Colour using Diffuse lighting only
-	float diffuseAmount = max(dot(LightVecW, Normal), 0.0f);
-
-	float specularAmount = pow(max(dot(reflection, toEye), 0.0f), SpecularPower);
-
-	float4 specularColour = txSpecular.Sample(samLinear, input.TexCoord);
-
-	float4 ambient = (AmbientLight * AmbientMtrl);
-	float4 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight);
-
-	float4 specular = (specularAmount * (SpecularMtrl * SpecularLight));
+	float4 ambient = GetAmbient();
+	float4 diffuse = GetDiffuse(Normal);
+	float4 specular = GetSpecular(Normal, input.PosW);
 
 	float4 textureColour = txDiffuse.Sample(samLinear, input.TexCoord);
 
@@ -98,10 +105,9 @@ float4 PS(VS_OUTPUT input) : SV_Target
 VS_OUTPUT SkyboxVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
+
 	output.Pos = mul(Pos, World);
-
 	output.PosW = output.Pos.xyz;
-
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
 
@@ -130,9 +136,7 @@ VS_OUTPUT WaterVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord
 	// Modify normals to reflect movement of position
 
 	output.Pos = mul(Pos, World);
-
 	output.PosW = output.Pos.xyz;
-
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
 
@@ -151,21 +155,9 @@ float4 WaterPS(VS_OUTPUT input) : SV_Target
 
 	float3 Normal = normalize(input.Normal);
 
-	float3 toEye = normalize(EyePosW - input.PosW);
-
-	float3 reflection = reflect(mul(LightVecW, -1.0), Normal);
-
-	// Compute Colour using Diffuse lighting only
-	float diffuseAmount = max(dot(LightVecW, Normal), 0.0f);
-
-	float specularAmount = pow(max(dot(reflection, toEye), 0.0f), SpecularPower);
-
-	float4 specularColour = txSpecular.Sample(samLinear, input.TexCoord);
-
-	float4 ambient = (AmbientLight * AmbientMtrl);
-	float4 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight);
-
-	float4 specular = (specularAmount * (SpecularMtrl * SpecularLight));
+	float4 ambient = GetAmbient();
+	float4 diffuse = GetDiffuse(Normal);
+	float4 specular = GetSpecular(Normal, input.PosW);
 
 	// This enables tiling (200 tiles per plane) and also does a scrolling effect to make the water look more fluid
 	float2 newTexCoord = float2(input.TexCoord.x * 200 + (sin(gTime) * 0.3), input.TexCoord.y * 200 + (sin(gTime) * 0.3));
