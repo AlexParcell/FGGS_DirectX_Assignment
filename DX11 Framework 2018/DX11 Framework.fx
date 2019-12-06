@@ -196,9 +196,9 @@ VS_OUTPUT SkyboxVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoor
 
 float4 SkyboxPS(VS_OUTPUT input) : SV_Target
 {
-	float4 color = float4(95.0f / 255.0f, 205.0f / 255.0f, 228.0f / 255.0f, 1.0f);
-	float4 white = float4(1.0f, 1.0f, 1.0f, 1.0f);
-	return lerp(white, color, clamp(input.PosW.y / 300 + 0.2, 0, 1)); // divide by the scale (300) to get between 0 and 1, add 0.3 to define gradient start
+	float4 color = float4(1.0f / 255.0f, 119.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+	float4 white = float4(158.0f / 255.0f, 223.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+	return lerp(white, color, clamp(input.PosW.y / 10000 - 0.2, 0, 1)); // divide by the scale (300) to get between 0 and 1, add 0.3 to define gradient start
 }
 
 // WATER SHADERS
@@ -237,4 +237,49 @@ float4 WaterPS(VS_OUTPUT input) : SV_Target
 	float4 textureColour = txDiffuse.Sample(samLinear, newTexCoord);
 
 	return float4(textureColour.rgb * (ambient.rgb + finalLight.diffuse.rgb + finalLight.specular.rgb), DiffuseMtrl.a);
+}
+
+// Terrain Shaders
+
+VS_OUTPUT TerrainVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
+{
+	VS_OUTPUT output = (VS_OUTPUT)0;
+
+	output.Pos = mul(Pos, World);
+	output.PosW = output.Pos.xyz;
+	output.Pos = mul(output.Pos, View);
+	output.Pos = mul(output.Pos, Projection);
+
+	// Convert from local space to world space 
+	// W component of vector is 0 as vectors cannot be translated
+	output.Normal = mul(float4(Normal, 0.0f), World).xyz;
+
+	output.TexCoord = TexCoord;
+
+	return output;
+}
+
+float4 TerrainPS(VS_OUTPUT input) : SV_Target
+{
+	float4 sand = float4(237.0f / 255.0f, 201.0f / 255.0f, 175.0f / 255.0f, 1.0f);
+	float4 grass = float4(0.4, 0.7, 0.4, 1.0f);
+	float4 rock = float4(0.7, 0.7, 0.7, 1.0f);
+	float4 snow = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	float4 color;
+	float height = clamp(input.PosW.y / 500, 0, 1);
+
+	if (height < 0.05)
+		color = sand;
+	else if (height < 0.22)
+		color = grass;
+	else if (height < 0.95)
+		color = rock;
+	else
+		color = snow;
+
+	float3 normal = normalize(input.Normal);
+	float4 ambient = GetAmbient();
+	Lighting finalLight = ProcessLighting(input.PosW, normal);
+
+	return float4(color.rgb * (ambient.rgb + finalLight.diffuse.rgb + finalLight.specular.rgb), DiffuseMtrl.a);
 }

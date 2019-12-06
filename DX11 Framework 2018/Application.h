@@ -51,6 +51,8 @@ private:
 	ID3D11PixelShader* _pSkyboxPS = nullptr;
 	ID3D11VertexShader* _pWaterVS = nullptr;
 	ID3D11PixelShader* _pWaterPS = nullptr;
+	ID3D11VertexShader* _pTerrainVS = nullptr;
+	ID3D11PixelShader* _pTerrainPS = nullptr;
 
 	ID3D11InputLayout*      _pVertexLayout = nullptr;
 	ID3D11Buffer*           _pConstantBuffer = nullptr;

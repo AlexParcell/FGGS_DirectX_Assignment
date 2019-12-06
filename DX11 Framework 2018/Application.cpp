@@ -157,7 +157,7 @@ HRESULT Application::InitShadersAndInputLayout()
 		return hr;
 	}
 
-	// Create Skybox Pixel Shader
+	// Create Water Pixel Shader
 	ID3DBlob* pWaterPSBlob = nullptr;
 	hr = CompileShaderFromFile(L"DX11 Framework.fx", "WaterPS", "ps_4_0", &pWaterPSBlob);
 
@@ -170,6 +170,42 @@ HRESULT Application::InitShadersAndInputLayout()
 
 	hr = _pd3dDevice->CreatePixelShader(pWaterPSBlob->GetBufferPointer(), pWaterPSBlob->GetBufferSize(), nullptr, &_pWaterPS);
 	pWaterPSBlob->Release();
+
+	if (FAILED(hr))
+		return hr;
+
+	// Make Terrain Vertex Shader
+	ID3DBlob* pTerrainVSBlob = nullptr;
+	hr = CompileShaderFromFile(L"DX11 Framework.fx", "TerrainVS", "vs_4_0", &pTerrainVSBlob);
+
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr,
+			L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		return hr;
+	}
+
+	hr = _pd3dDevice->CreateVertexShader(pTerrainVSBlob->GetBufferPointer(), pTerrainVSBlob->GetBufferSize(), nullptr, &_pTerrainVS);
+
+	if (FAILED(hr))
+	{
+		pTerrainVSBlob->Release();
+		return hr;
+	}
+
+	// Create Terrain Pixel Shader
+	ID3DBlob* pTerrainPSBlob = nullptr;
+	hr = CompileShaderFromFile(L"DX11 Framework.fx", "TerrainPS", "ps_4_0", &pTerrainPSBlob);
+
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr,
+			L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		return hr;
+	}
+
+	hr = _pd3dDevice->CreatePixelShader(pTerrainPSBlob->GetBufferPointer(), pTerrainPSBlob->GetBufferSize(), nullptr, &_pTerrainPS);
+	pTerrainPSBlob->Release();
 
 	if (FAILED(hr))
 		return hr;
@@ -440,8 +476,8 @@ HRESULT Application::InitDevice()
 	Terrain->SetPosition(XMFLOAT3(0.0f, -10.0f, 0.0f));
 	Terrain->SetScale(XMFLOAT3(100.0f, 100.0f, 100.0f));
 	Terrain->SetRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	Terrain->SetVertexShader(_pVertexShader);
-	Terrain->SetPixelShader(_pPixelShader);
+	Terrain->SetVertexShader(_pTerrainVS);
+	Terrain->SetPixelShader(_pTerrainPS);
 
 	// Set up cameras
 	_pFirstPersonCam = new FirstPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
