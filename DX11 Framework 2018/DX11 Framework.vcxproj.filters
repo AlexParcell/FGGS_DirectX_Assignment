@@ -21,7 +21,6 @@
     <ClInclude Include="ThirdPersonCamera.h" />
     <ClInclude Include="FirstPersonCamera.h" />
     <ClInclude Include="PlayableObject.h" />
-    <ClInclude Include="Skybox.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -33,7 +32,6 @@
     <ClCompile Include="ThirdPersonCamera.cpp" />
     <ClCompile Include="FirstPersonCamera.cpp" />
     <ClCompile Include="PlayableObject.cpp" />
-    <ClCompile Include="Skybox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">

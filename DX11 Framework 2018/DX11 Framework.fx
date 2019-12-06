@@ -8,7 +8,7 @@
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 
-#define LIGHTCOUNT 8
+#define LIGHTCOUNT 4
 #define POINT_LIGHT 0
 #define DIRECTIONAL_LIGHT 1
 
@@ -206,8 +206,8 @@ float4 SkyboxPS(VS_OUTPUT input) : SV_Target
 VS_OUTPUT WaterVS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 TexCoord : TEXCOORD0)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
-	Pos.y += 0.5f * sin(Pos.x) * sin(3.0f * gTime);
-	Normal.y += 0.5f * sin(Normal.x) * sin(3.0f * gTime);
+	Pos.y += 0.6f * sin(Pos.x) * sin(3.0f * gTime);
+	Normal.y += 0.6f * sin(Normal.x) * sin(3.0f * gTime);
 
 	// Modify normals to reflect movement of position
 
@@ -233,7 +233,7 @@ float4 WaterPS(VS_OUTPUT input) : SV_Target
 	Lighting finalLight = ProcessLighting(input.PosW, normal);
 
 	// This enables tiling (200 tiles per plane) and also does a scrolling effect to make the water look more fluid
-	float2 newTexCoord = float2(input.TexCoord.x * 200 + (sin(gTime) * 0.3), input.TexCoord.y * 200 + (sin(gTime) * 0.3));
+	float2 newTexCoord = float2(input.TexCoord.x * 100 + (sin(gTime) * 0.3), input.TexCoord.y * 100 + (sin(gTime) * 0.3));
 	float4 textureColour = txDiffuse.Sample(samLinear, newTexCoord);
 
 	return float4(textureColour.rgb * (ambient.rgb + finalLight.diffuse.rgb + finalLight.specular.rgb), DiffuseMtrl.a);

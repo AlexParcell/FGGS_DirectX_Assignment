@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <string>
 
-#define LIGHTCOUNT 8
+#define LIGHTCOUNT 4
 
 using namespace DirectX;
 using namespace std;
@@ -45,14 +45,16 @@ private:
 	ID3D11DeviceContext*    _pImmediateContext = nullptr;
 	IDXGISwapChain*         _pSwapChain = nullptr;
 	ID3D11RenderTargetView* _pRenderTargetView = nullptr;
+
+	// Shaders
 	ID3D11VertexShader*     _pVertexShader = nullptr;
 	ID3D11PixelShader*      _pPixelShader = nullptr;
-	ID3D11VertexShader* _pSkyboxVS = nullptr;
-	ID3D11PixelShader* _pSkyboxPS = nullptr;
-	ID3D11VertexShader* _pWaterVS = nullptr;
-	ID3D11PixelShader* _pWaterPS = nullptr;
-	ID3D11VertexShader* _pTerrainVS = nullptr;
-	ID3D11PixelShader* _pTerrainPS = nullptr;
+	ID3D11VertexShader*		_pSkyboxVS = nullptr;
+	ID3D11PixelShader*		_pSkyboxPS = nullptr;
+	ID3D11VertexShader*		_pWaterVS = nullptr;
+	ID3D11PixelShader*		_pWaterPS = nullptr;
+	ID3D11VertexShader*		_pTerrainVS = nullptr;
+	ID3D11PixelShader*		_pTerrainPS = nullptr;
 
 	ID3D11InputLayout*      _pVertexLayout = nullptr;
 	ID3D11Buffer*           _pConstantBuffer = nullptr;
@@ -72,9 +74,8 @@ private:
 	ConstantBuffer* _pCurrentCB;
 
 	GameObject* Skybox = nullptr;
-	GameObject* Water = nullptr;
 	PlayableObject* Boat = nullptr;
-	GameObject* Terrain = nullptr;
+	vector<GameObject*> Objects;
 
 	bool _bWireframe = false;
 	float _fTime = 0.0f;
@@ -107,8 +108,8 @@ public:
 	float GetTime() { return _fTime; }
 
 	void LoadObjects();
-	wchar_t* Application::StringToWCHAR_T(std::string string);
-	char* Application::StringToCHAR(std::string string);
+	void LoadLights();
+	void LoadCameras();
 
 	XMFLOAT4X4* GetViewMatrix() { return &_view; }
 };

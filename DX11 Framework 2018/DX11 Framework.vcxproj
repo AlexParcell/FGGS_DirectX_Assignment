@@ -383,7 +383,6 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="PlayableObject.cpp" />
-    <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="ThirdPersonCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -399,7 +398,6 @@
     <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="PlayableObject.h" />
     <CLInclude Include="resource.h" />
-    <ClInclude Include="Skybox.h" />
     <ClInclude Include="Structures.h" />
     <ClInclude Include="ThirdPersonCamera.h" />
     <ResourceCompile Include="DX11 Framework.rc" />

@@ -1,0 +1,104 @@
+{
+  "Objects": [
+    {
+      "Tag": "Water",
+      "Mesh": "Plane.obj",
+      "Texture": "Water_COLOR.dds",
+      "Position": {
+        "x": -500,
+        "y": -5,
+        "z": -500
+      },
+      "Scale": {
+        "x": 100,
+        "y": 1,
+        "z": 100
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "Tag": "Boat",
+      "Mesh": "Boat.obj",
+      "Texture": "Boat_COLOR.dds",
+      "Position": {
+        "x": 0,
+        "y": -4.5,
+        "z": 0
+      },
+      "Scale": {
+        "x": 0.5,
+        "y": 0.5,
+        "z": 0.5
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "Tag": "Skybox",
+      "Mesh": "sphere.obj",
+      "Texture": "Skybox.dds",
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Scale": {
+        "x": -10000,
+        "y": -10000,
+        "z": -10000
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "Tag": "Mine",
+      "Mesh": "sphere.obj",
+      "Texture": "Mine.dds",
+      "Position": {
+        "x": 100,
+        "y": -2.5,
+        "z": 0
+      },
+      "Scale": {
+        "x": 5,
+        "y": 5,
+        "z": 5
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "Tag": "Terrain",
+      "Mesh": "Terrain.obj",
+      "Texture": "Terrain.dds",
+      "Position": {
+        "x": 0,
+        "y": -10,
+        "z": 0
+      },
+      "Scale": {
+        "x": 100,
+        "y": 100,
+        "z": 100
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ]
+}

@@ -284,58 +284,133 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
 
 void Application::LoadObjects()
 {
-	std::fstream jsonfile("Level.json"); // opening file
+	std::fstream jsonfile("Objects.json"); // opening file
 	nlohmann::json json1; // making JSON object
 	jsonfile >> json1; // reading JSON file to object
 	jsonfile.close(); // closing file
-	nlohmann::json array = json1["Objects"];
+	nlohmann::json objects = json1["Objects"];
 
-	for (int i = 0; i < array.size(); i++)
+	for (int i = 0; i < objects.size(); i++)
 	{
 		// Get texture and mesh names
-		std::string TempMeshName = array[i]["Mesh"].get<std::string>().c_str();
+		std::string TempMeshName = objects[i]["Mesh"].get<std::string>().c_str();
 		char* MeshName = (char*) (TempMeshName.c_str());
-		std::string TempTextName = (array[i]["Texture"].get<std::string>().c_str());
+		std::string TempTextName = (objects[i]["Texture"].get<std::string>().c_str());
 		std::wstring wTempTextName = std::wstring(TempTextName.begin(), TempTextName.end());
 		wchar_t* TextureName = (wchar_t*)(wTempTextName.c_str());
 
 		// Get transform
-		XMFLOAT3 Position = XMFLOAT3(array[i]["Position"]["x"], array[i]["Position"]["y"], array[i]["Position"]["z"]);
-		XMFLOAT3 Scale = XMFLOAT3(array[i]["Scale"]["x"], array[i]["Scale"]["y"], array[i]["Scale"]["z"]);
-		XMFLOAT3 Rotation = XMFLOAT3(array[i]["Rotation"]["x"], array[i]["Rotation"]["y"], array[i]["Rotation"]["z"]);
+		XMFLOAT3 Position = XMFLOAT3(objects[i]["Position"]["x"], objects[i]["Position"]["y"], objects[i]["Position"]["z"]);
+		XMFLOAT3 Scale = XMFLOAT3(objects[i]["Scale"]["x"], objects[i]["Scale"]["y"], objects[i]["Scale"]["z"]);
+		XMFLOAT3 Rotation = XMFLOAT3(objects[i]["Rotation"]["x"], objects[i]["Rotation"]["y"], objects[i]["Rotation"]["z"]);
 
 		// Get mesh
 		MeshData mesh = OBJLoader::Load(MeshName, _pd3dDevice);
 
-		std::string Tag = array[i]["Tag"].get<std::string>();
+		GameObject* newObject = nullptr;
+
+		std::string Tag = objects[i]["Tag"].get<std::string>();
 		if (Tag == "Skybox")
 		{
-			Skybox = new GameObject(mesh, this, TextureName);
-			Skybox->SetPosition(Position);
-			Skybox->SetScale(Scale);
-			Skybox->SetRotation(Rotation);
-			Skybox->SetVertexShader(_pSkyboxVS);
-			Skybox->SetPixelShader(_pSkyboxPS);
+			newObject = new GameObject(mesh, this, TextureName);
+			newObject->SetPosition(Position);
+			newObject->SetScale(Scale);
+			newObject->SetRotation(Rotation);
+			newObject->SetVertexShader(_pSkyboxVS);
+			newObject->SetPixelShader(_pSkyboxPS);
+			Skybox = newObject;
 		}
 		else if (Tag == "Boat")
 		{
-			Boat = new PlayableObject(mesh, this, TextureName);
-			Boat->SetPosition(Position);
-			Boat->SetScale(Scale);
-			Boat->SetRotation(Rotation);
-			Boat->SetVertexShader(_pVertexShader);
-			Boat->SetPixelShader(_pPixelShader);
+			newObject = (GameObject*) new PlayableObject(mesh, this, TextureName);
+			newObject->SetPosition(Position);
+			newObject->SetScale(Scale);
+			newObject->SetRotation(Rotation);
+			newObject->SetVertexShader(_pVertexShader);
+			newObject->SetPixelShader(_pPixelShader);
+			Boat = (PlayableObject*) newObject;
 		}
 		else if (Tag == "Water")
 		{
-			Water = new GameObject(mesh, this, TextureName);
-			Water->SetPosition(Position);
-			Water->SetScale(Scale);
-			Water->SetRotation(Rotation);
-			Water->SetVertexShader(_pWaterVS);
-			Water->SetPixelShader(_pWaterPS);
+			newObject = new GameObject(mesh, this, TextureName);
+			newObject->SetPosition(Position);
+			newObject->SetScale(Scale);
+			newObject->SetRotation(Rotation);
+			newObject->SetVertexShader(_pWaterVS);
+			newObject->SetPixelShader(_pWaterPS);
 		}
+		else if (Tag == "Terrain")
+		{
+			newObject = new GameObject(mesh, this, TextureName);
+			newObject->SetPosition(Position);
+			newObject->SetScale(Scale);
+			newObject->SetRotation(Rotation);
+			newObject->SetVertexShader(_pTerrainVS);
+			newObject->SetPixelShader(_pTerrainPS);
+		}
+		else if (Tag == "Mine")
+		{
+			newObject = new GameObject(mesh, this, TextureName);
+			newObject->SetPosition(Position);
+			newObject->SetScale(Scale);
+			newObject->SetRotation(Rotation);
+			newObject->SetVertexShader(_pVertexShader);
+			newObject->SetPixelShader(_pPixelShader);
+		}
+
+		Objects.push_back(newObject);
 	}
+}
+
+void Application::LoadLights()
+{
+	std::fstream lightfile("Lights.json"); // opening file
+	nlohmann::json lightJSON; // making JSON object
+	lightfile >> lightJSON; // reading JSON file to object
+	lightfile.close(); // closing file
+	nlohmann::json lightArray = lightJSON["Lights"];
+
+	for (int i = 0; i < LIGHTCOUNT; i++)
+	{
+		XMFLOAT3 Position = XMFLOAT3(lightArray[i]["Position"]["x"], lightArray[i]["Position"]["y"], lightArray[i]["Position"]["z"]);
+		XMFLOAT3 Direction = XMFLOAT3(lightArray[i]["Direction"]["x"], lightArray[i]["Direction"]["y"], lightArray[i]["Direction"]["z"]);
+		XMFLOAT4 Color = XMFLOAT4(lightArray[i]["Color"]["r"], lightArray[i]["Color"]["g"], lightArray[i]["Color"]["b"], lightArray[i]["Color"]["a"]);;
+		bool Enabled = lightArray[i]["Enabled"];
+		LightType Type = lightArray[i]["LightType"];
+		float ConstantAttenuation = lightArray[i]["ConstantAttenuation"];
+		float LinearAttenuation = lightArray[i]["LinearAttenuation"];
+		float QuadraticAttenuation = lightArray[i]["QuadraticAttenuation"];
+
+		Light light;
+		light.Position = Position;
+		light.Direction = Direction;
+		light.Color = Color;
+		light.Enabled = Enabled;
+		light.Type = Type;
+		light.ConstantAttenuation = ConstantAttenuation;
+		light.LinearAttenuation = LinearAttenuation;
+		light.QuadraticAttenuation = QuadraticAttenuation;
+		lights[i] = light;
+	}
+}
+
+void Application::LoadCameras()
+{
+	// Set up cameras
+	_pFirstPersonCam = new FirstPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
+	_pFirstPersonCam->SetTarget(Boat);
+
+	_pThirdPersonCam = new ThirdPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
+	_pThirdPersonCam->SetTarget(Boat);
+	_pActiveCam = (Camera*)_pThirdPersonCam;
+
+	_pTopDownCam = new Camera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pTopDownCam->SetDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	_pTopDownCam->SetEye(XMFLOAT3(10.0f, 100.0f, 0.0f));
+
+	_pFixedViewCam = new Camera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pFixedViewCam->SetDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	_pFixedViewCam->SetEye(XMFLOAT3(100.0f, 50.0f, 0.0f));
 }
 
 HRESULT Application::CompileShaderFromFile(WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
@@ -469,60 +544,8 @@ HRESULT Application::InitDevice()
 	InitShadersAndInputLayout();
 
 	LoadObjects();
-
-	MeshData terrain = OBJLoader::Load("Terrain.obj", _pd3dDevice);
-
-	Terrain = new GameObject(terrain, this, L"Terrain.dds");
-	Terrain->SetPosition(XMFLOAT3(0.0f, -10.0f, 0.0f));
-	Terrain->SetScale(XMFLOAT3(100.0f, 100.0f, 100.0f));
-	Terrain->SetRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	Terrain->SetVertexShader(_pTerrainVS);
-	Terrain->SetPixelShader(_pTerrainPS);
-
-	// Set up cameras
-	_pFirstPersonCam = new FirstPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
-	_pFirstPersonCam->SetTarget(Boat);
-
-	_pThirdPersonCam = new ThirdPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
-	_pThirdPersonCam->SetTarget(Boat);
-	_pActiveCam = (Camera*) _pThirdPersonCam;
-
-	_pTopDownCam = new Camera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
-	_pTopDownCam->SetDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	_pTopDownCam->SetEye(XMFLOAT3(10.0f, 100.0f, 0.0f));
-
-	_pFixedViewCam = new Camera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
-	_pFixedViewCam->SetDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	_pFixedViewCam->SetEye(XMFLOAT3(100.0f, 50.0f, 0.0f));
-
-	Light light;
-	light.Enabled = true;
-	light.Type = DIRECTIONAL_LIGHT;
-	light.Direction = XMFLOAT3(0, -1, 0);
-	light.Position = XMFLOAT3(1000, 1000, 1000);
-	light.Color = XMFLOAT4(0.5, 0.5, 0.5, 1.0);
-	lights[0] = light;
-
-	Light light2;
-	light2.Enabled = true;
-	light2.Type = POINT_LIGHT;
-	light2.Color = XMFLOAT4(0.0f, 0.0f, 1.0f, 0.0f);
-	light2.Position = XMFLOAT3(0.0f, 5.0f, 0.0f);
-	lights[1] = light2;
-
-	Light light3;
-	light3.Enabled = true;
-	light3.Type = POINT_LIGHT;
-	light3.Color = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
-	light3.Position = XMFLOAT3(0.0f, 5.0f, 30.0f);
-	lights[2] = light3;
-
-	Light light4;
-	light4.Enabled = true;
-	light4.Type = POINT_LIGHT;
-	light4.Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f);
-	light4.Position = XMFLOAT3(0.0f, 5.0f, -30.0f);
-	lights[3] = light4;
+	LoadCameras();
+	LoadLights();
 
 	// Initialize the view matrix
 	_view = _pActiveCam->GetViewMatrix();
@@ -611,10 +634,10 @@ void Application::Update()
     // Animate the cube
     //
 	Skybox->SetPosition(_pActiveCam->GetEye());
-	Skybox->Update(deltaTime);
-	Water->Update(deltaTime);
-	Boat->Update(deltaTime);
-	Terrain->Update(deltaTime);
+	for (int i = 0; i < Objects.size(); i++)
+	{
+		Objects[i]->Update(deltaTime);
+	}
 
 	if (GetAsyncKeyState(VK_F1))
 	{
@@ -689,10 +712,10 @@ void Application::Draw()
 
     // Render objects
 
-	Skybox->Draw();
-	Water->Draw();
-	Boat->Draw();
-	Terrain->Draw();
+	for (int i = 0; i < Objects.size(); i++)
+	{
+		Objects[i]->Draw();
+	}
 
     // Present our back buffer to our front buffer
     _pSwapChain->Present(0, 0);
