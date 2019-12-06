@@ -434,11 +434,20 @@ HRESULT Application::InitDevice()
 
 	LoadObjects();
 
+	MeshData terrain = OBJLoader::Load("Terrain.obj", _pd3dDevice);
+
+	Terrain = new GameObject(terrain, this, L"Terrain.dds");
+	Terrain->SetPosition(XMFLOAT3(0.0f, -10.0f, 0.0f));
+	Terrain->SetScale(XMFLOAT3(100.0f, 100.0f, 100.0f));
+	Terrain->SetRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	Terrain->SetVertexShader(_pVertexShader);
+	Terrain->SetPixelShader(_pPixelShader);
+
 	// Set up cameras
-	_pFirstPersonCam = new FirstPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pFirstPersonCam = new FirstPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
 	_pFirstPersonCam->SetTarget(Boat);
 
-	_pThirdPersonCam = new ThirdPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
+	_pThirdPersonCam = new ThirdPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
 	_pThirdPersonCam->SetTarget(Boat);
 	_pActiveCam = (Camera*) _pThirdPersonCam;
 
@@ -453,7 +462,31 @@ HRESULT Application::InitDevice()
 	Light light;
 	light.Enabled = true;
 	light.Type = DIRECTIONAL_LIGHT;
+	light.Direction = XMFLOAT3(0, -1, 0);
+	light.Position = XMFLOAT3(1000, 1000, 1000);
+	light.Color = XMFLOAT4(0.5, 0.5, 0.5, 1.0);
 	lights[0] = light;
+
+	Light light2;
+	light2.Enabled = true;
+	light2.Type = POINT_LIGHT;
+	light2.Color = XMFLOAT4(0.0f, 0.0f, 1.0f, 0.0f);
+	light2.Position = XMFLOAT3(0.0f, 5.0f, 0.0f);
+	lights[1] = light2;
+
+	Light light3;
+	light3.Enabled = true;
+	light3.Type = POINT_LIGHT;
+	light3.Color = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
+	light3.Position = XMFLOAT3(0.0f, 5.0f, 30.0f);
+	lights[2] = light3;
+
+	Light light4;
+	light4.Enabled = true;
+	light4.Type = POINT_LIGHT;
+	light4.Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f);
+	light4.Position = XMFLOAT3(0.0f, 5.0f, -30.0f);
+	lights[3] = light4;
 
 	// Initialize the view matrix
 	_view = _pActiveCam->GetViewMatrix();
@@ -545,6 +578,7 @@ void Application::Update()
 	Skybox->Update(deltaTime);
 	Water->Update(deltaTime);
 	Boat->Update(deltaTime);
+	Terrain->Update(deltaTime);
 
 	if (GetAsyncKeyState(VK_F1))
 	{
@@ -601,13 +635,10 @@ void Application::Draw()
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
 	cb.gTime = _fTime;
-	cb.lightDirection = _pLight->lightDirection;
 	cb.diffuseMaterial = _pLight->diffuseMaterial;
-	cb.diffuseLight = _pLight->diffuseLight;
 	cb.ambientMaterial = _pLight->ambientMaterial;
 	cb.ambientLight = _pLight->ambientLight;
 	cb.specularMaterial = _pLight->specularMaterial;
-	cb.specularLight = _pLight->specularLight;
 	cb.specularPower = _pLight->specularPower;
 	cb.eyePosW = _pActiveCam->GetEye();
 	for (int i = 0; i < LIGHTCOUNT; i++)
@@ -625,6 +656,7 @@ void Application::Draw()
 	Skybox->Draw();
 	Water->Draw();
 	Boat->Draw();
+	Terrain->Draw();
 
     // Present our back buffer to our front buffer
     _pSwapChain->Present(0, 0);

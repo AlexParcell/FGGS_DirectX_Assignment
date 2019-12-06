@@ -18,7 +18,10 @@ struct Light
 	bool Enabled; // 4
 	float3 Direction; // 12
 	int LightType; // 4
-	float3 Color; // 12
+	float4 Color; // 12
+	float ConstantAttenuation;
+	float LinearAttenuation;
+	float QuadraticAttenuation;
 	float Padding;
 };
 
@@ -28,13 +31,11 @@ cbuffer ConstantBuffer : register( b0 )
 	matrix View;
 	matrix Projection;
 	float gTime;
-	float3 LightVecW;
+	float3 padding;
 	float4 DiffuseMtrl;
-	float4 DiffuseLight;
 	float4 AmbientMtrl;
 	float4 AmbientLight;
 	float4 SpecularMtrl;
-	float4 SpecularLight;
 	float SpecularPower;
 	float3 EyePosW;
 	Light Lights[LIGHTCOUNT];
@@ -58,17 +59,17 @@ struct Lighting
 	float4 specular;
 };
 
-float4 GetSpecular(float3 ToEye, float3 LightDirection, float3 Normal)
+float4 GetSpecular(Light light, float3 ToEye, float3 LightDirection, float3 Normal)
 {
 	float3 reflection = reflect(mul(LightDirection, -1.0), Normal); // Reflection of light against surface, about normal
 	float specularAmount = pow(max(dot(reflection, ToEye), 0.0f), SpecularPower);
-	return (specularAmount * (SpecularMtrl * SpecularLight));
+	return (specularAmount * (SpecularMtrl * light.Color));
 }
 
-float4 GetDiffuse(float3 LightDirection, float3 Normal)
+float4 GetDiffuse(Light light, float3 LightDirection, float3 Normal)
 {
 	float diffuseAmount = max(dot(LightDirection, Normal), 0.0f);
-	return diffuseAmount * (DiffuseMtrl * DiffuseLight);
+	return diffuseAmount * (DiffuseMtrl * light.Color);
 }
 
 float4 GetAmbient()
@@ -76,9 +77,13 @@ float4 GetAmbient()
 	return AmbientLight * AmbientMtrl;
 }
 
+// This is a factor that weakens light as distance from it increases
+// Constant Attenuation increases or decreases the intensity of the light source independent of distance
+// Linear Attenuation decreases the intensity of the light linearly as the distance to the light source increases
+// Quadratic Attenuation decreases the intensity of the light quadratically as distance to light increases
 float GetAttenuation(Light light, float Distance)
 {
-	return 1.0f / (0.7f + (0.1f * Distance) + (0.01f * Distance * Distance));
+	return 1.0f / (light.ConstantAttenuation + (light.LinearAttenuation * Distance) + (light.QuadraticAttenuation * Distance * Distance));
 }
 
 // Big directional light, works like the sun
@@ -87,8 +92,8 @@ Lighting GetDirectionalLight(Light light, float3 ToEye, float3 WorldPosition, fl
 	float3 LightDirection = light.Direction * -1;
 
 	Lighting result;
-	result.diffuse = GetDiffuse(LightDirection, Normal);
-	result.specular = GetSpecular(ToEye, LightDirection, Normal);
+	result.diffuse = GetDiffuse(light, LightDirection, Normal);
+	result.specular = GetSpecular(light, ToEye, LightDirection, Normal);
 	return result;
 }
 
@@ -96,14 +101,14 @@ Lighting GetDirectionalLight(Light light, float3 ToEye, float3 WorldPosition, fl
 Lighting GetPointLight(Light light, float3 ToEye, float3 WorldPosition, float3 Normal)
 {
 	float3 LightDirection = (light.Pos - WorldPosition);
-	float3 Distance = length(LightDirection);
+	float Distance = length(LightDirection);
 	LightDirection = normalize(LightDirection);
 	
 	float Attenuation = GetAttenuation(light, Distance);
 
 	Lighting result;
-	result.diffuse = GetDiffuse(LightDirection, Normal) * Attenuation;
-	result.specular = GetSpecular(ToEye, LightDirection, Normal) * Attenuation;
+	result.diffuse = GetDiffuse(light, LightDirection, Normal) * Attenuation;
+	result.specular = GetSpecular(light, ToEye, LightDirection, Normal) * Attenuation;
 	return result;
 }
 
@@ -193,7 +198,7 @@ float4 SkyboxPS(VS_OUTPUT input) : SV_Target
 {
 	float4 color = float4(95.0f / 255.0f, 205.0f / 255.0f, 228.0f / 255.0f, 1.0f);
 	float4 white = float4(1.0f, 1.0f, 1.0f, 1.0f);
-	return lerp(white, color, clamp(input.PosW.y / 300 + 0.3, 0, 1)); // divide by the scale (300) to get between 0 and 1, add 0.3 to define gradient start
+	return lerp(white, color, clamp(input.PosW.y / 300 + 0.2, 0, 1)); // divide by the scale (300) to get between 0 and 1, add 0.3 to define gradient start
 }
 
 // WATER SHADERS

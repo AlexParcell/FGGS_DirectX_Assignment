@@ -72,7 +72,7 @@ private:
 	GameObject* Skybox = nullptr;
 	GameObject* Water = nullptr;
 	PlayableObject* Boat = nullptr;
-	vector<GameObject*> _pCubes;
+	GameObject* Terrain = nullptr;
 
 	bool _bWireframe = false;
 	float _fTime = 0.0f;
