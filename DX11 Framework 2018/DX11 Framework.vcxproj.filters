@@ -42,6 +42,7 @@
     <None Include="DX11 Framework.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DX11 Framework.rc">

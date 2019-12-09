@@ -386,6 +386,7 @@
     <ClCompile Include="ThirdPersonCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
     <None Include="DX11 Framework.fx" />
   </ItemGroup>
   <ItemGroup>

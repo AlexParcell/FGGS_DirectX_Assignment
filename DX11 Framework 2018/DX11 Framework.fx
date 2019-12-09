@@ -263,19 +263,33 @@ float4 TerrainPS(VS_OUTPUT input) : SV_Target
 {
 	float4 sand = float4(237.0f / 255.0f, 201.0f / 255.0f, 175.0f / 255.0f, 1.0f);
 	float4 grass = float4(0.4, 0.7, 0.4, 1.0f);
-	float4 rock = float4(0.7, 0.7, 0.7, 1.0f);
-	float4 snow = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	float4 rock = float4(0.5, 0.5, 0.5, 0.5);
+	float4 snow = float4(1.0, 1.0, 1.0, 1.0);
 	float4 color;
-	float height = clamp(input.PosW.y / 500, 0, 1);
+	float height = clamp(input.PosW.y / 1000, 0, 1);
 
-	if (height < 0.05)
-		color = sand;
-	else if (height < 0.22)
+	float sandBoundary = 0.05;
+	float grassBoundary = 0.47;
+	float rockBoundary = 0.995;
+
+	// When calculating the factor, we're basically getting the height to start at 0, and then multiplying it so the max value it can reach in it's range is 1
+	if (height < sandBoundary)
+	{
+		float factor = height * (1 / sandBoundary);
+		color = lerp(sand, grass, factor);
+	}
+	else if (height < grassBoundary)
+	{
 		color = grass;
-	else if (height < 0.95)
+	}
+	else if (height < rockBoundary)
+	{
 		color = rock;
+	}
 	else
+	{
 		color = snow;
+	}
 
 	float3 normal = normalize(input.Normal);
 	float4 ambient = GetAmbient();

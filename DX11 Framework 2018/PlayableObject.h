@@ -2,8 +2,8 @@
 #include "GameObject.h"
 class PlayableObject : public GameObject
 {
-	float Velocity = 0.0f;
-	float Acceleration = 0.0f;
+	float _fVelocity = 0.0f;
+	float _fAcceleration = 0.0f;
 
 public:
 	PlayableObject(MeshData mesh, Application* app, wchar_t* textureName);

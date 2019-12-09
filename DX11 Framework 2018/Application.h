@@ -73,14 +73,14 @@ private:
 	LightingData* _pLight = nullptr;
 	ConstantBuffer* _pCurrentCB;
 
-	GameObject* Skybox = nullptr;
-	PlayableObject* Boat = nullptr;
-	vector<GameObject*> Objects;
+	GameObject* _pSkybox = nullptr;
+	PlayableObject* _pBoat = nullptr;
+	vector<GameObject*> _pObjects;
 
 	bool _bWireframe = false;
 	float _fTime = 0.0f;
 
-	Light lights[LIGHTCOUNT];
+	Light _Lights[LIGHTCOUNT];
 
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);

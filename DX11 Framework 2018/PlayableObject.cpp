@@ -23,35 +23,35 @@ void PlayableObject::Update(float deltaTime, XMMATRIX WorldVector)
 	MakeForwardVector();
 	XMVECTOR forward = XMVector3Normalize(XMLoadFloat3(&_forward));
 
-	Acceleration = 0.0f;
+	_fAcceleration = 0.0f;
 
 	if (GetAsyncKeyState(0x57)) // W
 	{
-		Acceleration += 1000.0f * deltaTime;
-		if (Velocity < 5000.0f)
+		_fAcceleration += 1000.0f * deltaTime;
+		if (_fVelocity < 5000.0f)
 		{
-			Velocity += Acceleration * deltaTime;
+			_fVelocity += _fAcceleration * deltaTime;
 		}
 		else
 		{
-			Velocity = 5000.0f;
+			_fVelocity = 5000.0f;
 		}
 	}
 
 	if (GetAsyncKeyState(0x53)) // S
 	{
-		Acceleration -= 2000.0f * deltaTime;
-		if (Velocity > 0.0f)
+		_fAcceleration -= 2000.0f * deltaTime;
+		if (_fVelocity > 0.0f)
 		{
-			Velocity += Acceleration * deltaTime;
+			_fVelocity += _fAcceleration * deltaTime;
 		}
 		else
 		{
-			Velocity = 0.0f;
+			_fVelocity = 0.0f;
 		}
 	}
 
-	pos += forward * Velocity * deltaTime;
+	pos += forward * _fVelocity * deltaTime;
 	XMStoreFloat3(&_position, pos);
 
 	GameObject::Update(deltaTime);

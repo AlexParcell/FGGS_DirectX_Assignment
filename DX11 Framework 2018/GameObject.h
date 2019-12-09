@@ -23,7 +23,6 @@ public:
 	XMFLOAT3 _scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	XMFLOAT3 _rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	XMFLOAT3 _forward = XMFLOAT3(1.0f, 0.0f, 0.0f);
-	string tag;
 
 	Application* _pApp;
 	ID3D11VertexShader* _pVertexShader;

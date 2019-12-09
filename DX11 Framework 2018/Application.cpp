@@ -318,7 +318,7 @@ void Application::LoadObjects()
 			newObject->SetRotation(Rotation);
 			newObject->SetVertexShader(_pSkyboxVS);
 			newObject->SetPixelShader(_pSkyboxPS);
-			Skybox = newObject;
+			_pSkybox = newObject;
 		}
 		else if (Tag == "Boat")
 		{
@@ -328,7 +328,7 @@ void Application::LoadObjects()
 			newObject->SetRotation(Rotation);
 			newObject->SetVertexShader(_pVertexShader);
 			newObject->SetPixelShader(_pPixelShader);
-			Boat = (PlayableObject*) newObject;
+			_pBoat = (PlayableObject*) newObject;
 		}
 		else if (Tag == "Water")
 		{
@@ -358,7 +358,7 @@ void Application::LoadObjects()
 			newObject->SetPixelShader(_pPixelShader);
 		}
 
-		Objects.push_back(newObject);
+		_pObjects.push_back(newObject);
 	}
 }
 
@@ -390,7 +390,7 @@ void Application::LoadLights()
 		light.ConstantAttenuation = ConstantAttenuation;
 		light.LinearAttenuation = LinearAttenuation;
 		light.QuadraticAttenuation = QuadraticAttenuation;
-		lights[i] = light;
+		_Lights[i] = light;
 	}
 }
 
@@ -398,10 +398,10 @@ void Application::LoadCameras()
 {
 	// Set up cameras
 	_pFirstPersonCam = new FirstPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
-	_pFirstPersonCam->SetTarget(Boat);
+	_pFirstPersonCam->SetTarget(_pBoat);
 
 	_pThirdPersonCam = new ThirdPersonCamera(_WindowWidth, _WindowHeight, 0.01f, 11000.0f);
-	_pThirdPersonCam->SetTarget(Boat);
+	_pThirdPersonCam->SetTarget(_pBoat);
 	_pActiveCam = (Camera*)_pThirdPersonCam;
 
 	_pTopDownCam = new Camera(_WindowWidth, _WindowHeight, 0.01f, 500.0f);
@@ -633,10 +633,10 @@ void Application::Update()
     //
     // Animate the cube
     //
-	Skybox->SetPosition(_pActiveCam->GetEye());
-	for (int i = 0; i < Objects.size(); i++)
+	_pSkybox->SetPosition(_pActiveCam->GetEye());
+	for (int i = 0; i < _pObjects.size(); i++)
 	{
-		Objects[i]->Update(deltaTime);
+		_pObjects[i]->Update(deltaTime);
 	}
 
 	if (GetAsyncKeyState(VK_F1))
@@ -702,8 +702,8 @@ void Application::Draw()
 	cb.eyePosW = _pActiveCam->GetEye();
 	for (int i = 0; i < LIGHTCOUNT; i++)
 	{
-		if (lights[i].Enabled)
-			cb.lights[i] = lights[i];
+		if (_Lights[i].Enabled)
+			cb.lights[i] = _Lights[i];
 	}
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
@@ -712,9 +712,9 @@ void Application::Draw()
 
     // Render objects
 
-	for (int i = 0; i < Objects.size(); i++)
+	for (int i = 0; i < _pObjects.size(); i++)
 	{
-		Objects[i]->Draw();
+		_pObjects[i]->Draw();
 	}
 
     // Present our back buffer to our front buffer
