@@ -285,10 +285,10 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
 void Application::LoadObjects()
 {
 	std::fstream jsonfile("Objects.json"); // opening file
-	nlohmann::json json1; // making JSON object
-	jsonfile >> json1; // reading JSON file to object
+	nlohmann::json objectFile; // making JSON object
+	jsonfile >> objectFile; // reading JSON file to object
 	jsonfile.close(); // closing file
-	nlohmann::json objects = json1["Objects"];
+	nlohmann::json objects = objectFile["Objects"];
 
 	for (int i = 0; i < objects.size(); i++)
 	{
